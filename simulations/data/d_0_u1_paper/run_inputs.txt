@@ -1,0 +1,12 @@
+0.25#b
+0.375#b1
+0.0#d
+0.0#d1
+23.#t1
+17.#t
+6.#delta
+1.#u
+22#num_threads
+100#runs
+10000000#max_clones
+0#parallel=0, sinlge_run = 1

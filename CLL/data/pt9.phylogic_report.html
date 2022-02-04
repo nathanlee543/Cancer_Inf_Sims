@@ -1,0 +1,2026 @@
+<!DOCTYPE html>
+<html lang="en">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<head>
+  <title>pt9 Phylogic Report</title>
+  <script src="https://code.jquery.com/jquery-1.10.2.js"></script>
+  <script src="https://code.jquery.com/ui/1.10.4/jquery-ui.js"></script>
+  <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.19/css/jquery.dataTables.css">
+  <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.js"></script>
+  <script src="https://d3js.org/d3.v5.js"></script>
+  <link rel="stylesheet" type="text/css" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+  <script>
+    $(function() {
+      $.widget("PhylogicNDT_report.sample_name_table", {
+
+        options: {
+          columns: [],
+          sample_names: [],
+          sample_aliases: [],
+          sample_dates: [],
+          pie_plots: []
+        },
+
+
+        _create: function() {
+          let columns = this.options.columns;
+
+          let table = d3.select(this.element.context).append("table")
+            .attr("class", "table table-bordered hover");
+
+          table.append("thead")
+            .selectAll("td")
+            .data(columns)
+            .join("td")
+            .attr("style", "font-weight:bold; font-size: 12px")
+            .html(d => d);
+
+          table.append("tbody")
+            .selectAll("tr")
+            .data(this.options.sample_names)
+            .join("tr")
+            .attr("style", "font-size: 12px; cursor: pointer;")
+            .attr("class", "active-sample")
+            .attr("onclick", "$(\"#sample-name-table\").sample_name_table(\"toggle_sample\", this)")
+            .html((d, i) => "<td>" + d + "</td>"
+              + (this.options.sample_aliases.length ? "<td>" + this.options.sample_aliases[i] + "</td>" : "")
+              + (this.options.sample_dates.length ? "<td>" + this.options.sample_dates[i] + "</td>" : "")
+              + "<td><img src=data:image/png;base64," + this.options.pie_plots[i] + " alt=\"Run BuildTree to display\"></td>");
+
+        },
+
+        toggle_sample: function(row) {
+          if (row.className === "active-sample") {
+            row.className = "removed-sample";
+          } else {
+            row.className = "active-sample"
+          }
+        }
+
+      });
+
+      $("#sample-name-table").sample_name_table({"sample_aliases": ["T0", "T1", "T2"], "pie_plots": ["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"], "sample_names": ["sample_01", "sample_02", "sample_03"], "sample_dates": [0.64, 1.5, 6.37], "columns": ["Sample Name", "Alias", "Date", "Clonal Abundance"]})
+    });
+  </script>
+  <script>
+    $(function() {
+      $.widget("PhylogicNDT_report.clustering_plot", {
+
+        options: {
+          xlabels: [],
+          time_points: [],
+          cluster_dict: {},
+          width: 500,
+          height: 400,
+          margins: {top: 20, right: 50, bottom: 35, left: 50}
+        },
+
+        _elements: {
+          nd: undefined,
+          real_time: undefined,
+          scaled: undefined,
+          time_agnostic_plot: undefined,
+          time_scaled_plot: undefined,
+          plot_1d: undefined,
+          t: undefined,
+          n: undefined,
+          y: undefined
+        },
+
+        _create: function() {
+          let xlabels = this.options.xlabels,
+            time_points = this.options.time_points,
+            cluster_dict = this.options.cluster_dict,
+            width = this.options.width,
+            height = this.options.height,
+            margins = this.options.margins,
+            n_samples = xlabels.length,
+            unscaled_x = [...Array(n_samples).keys()];
+
+          this._elements.nd = xlabels.length > 1;
+          this._elements.real_time = time_points.reduce((a, c, i) => a || !(c===i), false);
+          this._elements.scaled = this._elements.real_time;
+
+          if (this._elements.nd) {
+            let n = d3.scaleLinear()
+              .domain([0, xlabels.length - 1])
+              .range([margins.left, width - margins.right]);
+
+            let y = d3.scaleLinear()
+              .domain([0, 1])
+              .range([height - margins.bottom, margins.top]);
+
+            let yAxis = g => g
+              .attr("transform", "translate(" + margins.left.toString() + " 0)")
+              .call(d3.axisLeft(y));
+
+            let time_agnostic_plot = d3.select(document.createElement("svg"))
+              .attr("baseProfile", "full")
+              .attr("viewBox", "0 0 " + width + " " + height)
+              .attr("version", "1.1")
+              .attr("xmlns", "http://www.w3.org/2000/svg")
+              .attr("xmlns:ev", "http://www.w3.org/2001/xml-events")
+              .attr("xmlns:xlink", "http://www.w3.org/1999/xlink")
+              .attr("overflow", "visible")
+              .attr("onmousemove", "$(\"#clustering-plot\").clustering_plot(\"show_value\", event, this)")
+              .attr("onmouseleave", "$(\"#clustering-plot\").clustering_plot(\"hide_value\", this)")
+              .style("display", this._elements.real_time ? "none" : "block")
+              .style("max-height", "450px");
+            time_agnostic_plot.append("g")
+              .call(g => g
+                .attr("transform", "translate(0 " + (height - margins.bottom) + ")")
+                .call(d3.axisBottom(n).tickValues(unscaled_x).tickFormat(d => xlabels[d]))
+              );
+            time_agnostic_plot.append("g")
+              .call(yAxis);
+            time_agnostic_plot.append("text")
+              .attr("x", (width + margins.left - margins.right) / 2)
+              .attr("y", height - 5)
+              .style("text-anchor", "middle")
+              .attr("font-size", "10px")
+              .text("Samples");
+            time_agnostic_plot.append("text")
+              .attr("transform", "rotate(-90 10 " + ((height + margins.top - margins.bottom) / 2).toString() + ")")
+              .attr("x", 10)
+              .attr("y", (height + margins.top - margins.bottom) / 2)
+              .style("text-anchor", "middle")
+              .attr("font-size", "10px")
+              .text("CCF(x)");
+            for (let clust in cluster_dict) {
+              time_agnostic_plot.append("path")
+                .datum(unscaled_x)
+                .attr("fill", "none")
+                .attr("stroke", cluster_dict[clust].color)
+                .attr("stroke-width", cluster_dict[clust].line_width)
+                .attr("opacity", 0.5)
+                .attr("d", d3.line()
+                  .x(d => n(d))
+                  .y(d => y(cluster_dict[clust].ccf_hat[d])));
+              time_agnostic_plot.append("polygon")
+                .attr("fill", cluster_dict[clust].color)
+                .attr("stroke", "none")
+                .attr("opacity", 0.2)
+                .attr("points", cluster_dict[clust].ccf_high.reduce((a, c, i) => a + n(i) + "," + y(c) + " ", "") +
+                  cluster_dict[clust].ccf_low.reverse().reduce((a, c, i) => a + n(n_samples - i - 1) + "," + y(c) + " ", "")
+                );
+              time_agnostic_plot.append("g").selectAll("circle")
+                .data(unscaled_x)
+                .join("circle")
+                  .attr("fill", cluster_dict[clust].color)
+                  .attr("stroke", "none")
+                  .attr("r", 7)
+                  .attr("opacity", 1.0)
+                  .attr("cx", d => n(d))
+                  .attr("cy", d => y(cluster_dict[clust].ccf_hat[d]))
+            }
+            time_agnostic_plot.append("g")
+              .style("display", "none")
+              .attr("class", "tooltip_");
+
+            this._elements.n = n;
+            this._elements.time_agnostic_plot = time_agnostic_plot.node();
+
+            if (this._elements.real_time) {
+              let t = d3.scaleLinear()
+                .domain([Math.min(...time_points), Math.max(...time_points)])
+                .range([margins.left, width - margins.right]);
+
+              let time_scaled_plot = d3.select(document.createElement("svg"))
+                .attr("baseProfile", "full")
+                .attr("viewBox", "0 0 " + width + " " + height)
+                .attr("version", "1.1")
+                .attr("xmlns", "http://www.w3.org/2000/svg")
+                .attr("xmlns:ev", "http://www.w3.org/2001/xml-events")
+                .attr("xmlns:xlink", "http://www.w3.org/1999/xlink")
+                .attr("overflow", "visible")
+                .attr("onmousemove", "$(\"#clustering-plot\").clustering_plot(\"show_value\", event, this)")
+                .attr("onmouseleave", "$(\"#clustering-plot\").clustering_plot(\"hide_value\", this)")
+                .style("display", "block")
+                .style("max-height", "450px");
+              time_scaled_plot.append("g")
+                .call(g => g
+                  .attr("transform", "translate(0 " + (height - margins.bottom) + ")")
+                  .call(d3.axisBottom(t))
+                );
+              time_scaled_plot.append("g")
+                .call(yAxis);
+              time_scaled_plot.append("text")
+                .attr("x", (width + margins.left - margins.right) / 2)
+                .attr("y", height - 5)
+                .style("text-anchor", "middle")
+                .attr("font-size", "10px")
+                .text("Time");
+              time_scaled_plot.append("text")
+                .attr("transform", "rotate(-90 10 " + ((height + margins.top - margins.bottom) / 2).toString() + ")")
+                .attr("x", 10)
+                .attr("y", (height + margins.top - margins.bottom) / 2)
+                .style("text-anchor", "middle")
+                .attr("font-size", "10px")
+                .text("CCF(x)");
+              for (let clust in cluster_dict) {
+                time_scaled_plot.append("path")
+                  .datum(time_points)
+                  .attr("fill", "none")
+                  .attr("stroke", cluster_dict[clust].color)
+                  .attr("stroke-width", cluster_dict[clust].line_width)
+                  .attr("opacity", 0.5)
+                  .attr("d", d3.line()
+                    .x(d => t(d))
+                    .y((d, i) => y(cluster_dict[clust].ccf_hat[i])));
+                time_scaled_plot.append("polygon")
+                  .attr("fill", cluster_dict[clust].color)
+                  .attr("stroke", "none")
+                  .attr("opacity", 0.2)
+                  .attr("points", cluster_dict[clust].ccf_high.reduce((a, c, i) => a + t(time_points[i]) + "," + y(c) + " ", "") +
+                    cluster_dict[clust].ccf_low.reduce((a, c, i) => a + t(time_points[n_samples - i - 1]) + "," + y(c) + " ", "")
+                  );
+                time_scaled_plot.append("g").selectAll("circle")
+                  .data(time_points)
+                  .join("circle")
+                    .attr("fill", cluster_dict[clust].color)
+                    .attr("stroke", "none")
+                    .attr("r", 7)
+                    .attr("opacity", 1.0)
+                    .attr("cx", d => t(d))
+                    .attr("cy", (d, i) => y(cluster_dict[clust].ccf_hat[i]))
+              }
+              time_scaled_plot.append("g")
+                .style("display", "none")
+                .attr("class", "tooltip_");
+              
+              this._elements.t = t;
+              this._elements.time_scaled_plot = time_scaled_plot.node()
+            }
+            for (let clust in cluster_dict) {
+              cluster_dict[clust].ccf_low.reverse();
+            }
+          } else {
+            let max_bin = 0,
+              n_bins;
+            for (let c in cluster_dict) {
+              max_bin = Math.max(max_bin, ...cluster_dict[c].ccf_dist);
+              n_bins = cluster_dict[c].ccf_dist.length
+            }
+            let x = d3.scaleLinear()
+              .domain([0, 1])
+              .range([margins.left, width - margins.right]);
+
+            let y = d3.scaleLinear()
+              .domain([0, max_bin]).nice()
+              .range([height - margins.bottom, margins.top]);
+
+            let xAxis = g => g
+              .attr("transform", "translate(0 " + (height - margins.bottom).toString() + ")")
+              .call(d3.axisBottom(x));
+
+            let yAxis = g => g
+              .attr("transform", "translate(" + margins.left.toString() + " 0)")
+              .call(d3.axisLeft(y));
+
+            let plot_1d = d3.select(document.createElement("svg"))
+              .attr("baseProfile", "full")
+              .attr("viewBox", "0 0 " + width + " " + height)
+              .attr("version", "1.1")
+              .attr("xmlns", "http://www.w3.org/2000/svg")
+              .attr("xmlns:ev", "http://www.w3.org/2001/xml-events")
+              .attr("xmlns:xlink", "http://www.w3.org/1999/xlink")
+              .attr("style", "max-height: 450px");
+            plot_1d.append("g")
+              .call(xAxis);
+            plot_1d.append("g")
+              .call(yAxis);
+            plot_1d.append("text")
+              .attr("x", (width + margins.left - margins.right) / 2)
+              .attr("y", height - 5)
+              .style("text-anchor", "middle")
+              .attr("font-size", "10px")
+              .text("CCF(x)");
+            plot_1d.append("text")
+              .attr("transform", "rotate(-90 10 " + ((height + margins.top - margins.bottom) / 2).toString() + ")")
+              .attr("x", 10)
+              .attr("y", (height + margins.top - margins.bottom) / 2)
+              .style("text-anchor", "middle")
+              .attr("font-size", "10px")
+              .text("Probability density");
+
+            let zero_str = Array(n_bins).fill(0).reduce(
+              (a, c, i) => a + " " + x((n_bins - i - 1) / (n_bins - 1)).toString() + "," + y(0).toString(), " "
+            );
+
+            plot_1d.selectAll("polygon")
+              .data(Object.keys(cluster_dict))
+              .join("polygon")
+              .attr("points", d =>
+                cluster_dict[d].ccf_dist.reduce(
+                  (a, c, i) => a + " " + x(i / (n_bins - 1)).toString() + "," + y(c).toString(), ""
+                ) + zero_str
+              )
+              .attr("fill", d => cluster_dict[d].color)
+              .attr("opacity", 0.5)
+              .attr("stroke", "none");
+
+            this._elements.plot_1d = plot_1d.node()
+          }
+          
+          this._refresh();
+        },
+
+        _refresh: function() {
+          this.element.context.innerHTML = this._elements.nd ?
+            (this._elements.real_time ? this._elements.time_scaled_plot.outerHTML : "") + this._elements.time_agnostic_plot.outerHTML :
+            this._elements.plot_1d.outerHTML;
+        },
+
+        switch_plot: function() {
+          let display = this._elements.time_agnostic_plot.style.display === "none";
+          this._elements.time_agnostic_plot.style.display = display ? "block" : "none";
+          this._elements.time_scaled_plot.style.display = display ? "none" : "block";
+          this._elements.scaled = !this._elements.scaled;
+
+          this._refresh();
+        },
+
+        show_value: function(eve, plot) {
+          let {width, height} = plot.getBoundingClientRect(),
+            mouse_pos_x = eve.layerX * this.options.width / width,
+            mouse_pos_y = eve.layerY * this.options.height / height,
+            cluster_dict = this.options.cluster_dict,
+            xlabels = this.options.xlabels,
+            time_points = this.options.time_points,
+            tooltip = d3.select(plot).select(".tooltip_"),
+            x,
+            n;
+
+          if (this._elements.scaled) {
+            let scale_x = this._elements.t,
+              x_s = scale_x.invert(mouse_pos_x),
+              t = time_points.reduce((a, c) => (Math.abs(c - x_s) < Math.abs(a - x_s) ? c : a));
+            n = time_points.indexOf(t);
+            x = scale_x(t);
+          } else {
+            let scale_x = this._elements.n;
+            n = Math.round(scale_x.invert(mouse_pos_x));
+            x = scale_x(n);
+          }
+
+          tooltip
+            .attr("style", "display: block;")
+            .attr("transform", "translate(" + x + "," + mouse_pos_y + ")");
+
+          let border = tooltip.selectAll("path")
+            .data([null])
+            .join("path")
+              .attr("fill", "white")
+              .attr("stroke", "black");
+
+          let text_el = tooltip.selectAll("text")
+            .data([null])
+            .attr("font-size", "9px")
+            .join("text")
+            .call(t => t
+              .selectAll("tspan")
+              .data([xlabels[n], ...Object.keys(cluster_dict)])
+              .join("tspan")
+                .attr("x", 0)
+                .attr("y", (d, i) => (i * 1.1) + "em")
+                .style("font-weight", (d, i) => i ? null : "bold")
+                .style("fill", (d, i) => i ? cluster_dict[d].color : "black")
+                .text((d, i) => i ? cluster_dict[d].ccf_hat[n] + " (" + cluster_dict[d].ccf_low[n] + "-" +
+                  cluster_dict[d].ccf_high[n] + ")" : d)
+            );
+
+          let {y, width: w, height: h} = text_el.node().getBBox();
+
+          text_el.attr("transform", "translate(" + (-w / 2) + "," + (15 - y) + ")");
+          border.attr("d", "M" + (-w / 2 - 10) + ",5H-5l5,-5l5,5H" +
+            (w / 2 + 10) + "v" + (h + 20) +
+            "h-" + (w + 20) + "z");
+        },
+
+        hide_value: function(plot) {
+          d3.select(plot).select(".tooltip_").style("display", "none")
+        },
+
+        download: function() {
+          let dl_link;
+          if (this._elements.scaled) {
+            let time_scaled_plot = this._elements.time_scaled_plot.cloneNode(true);
+            time_scaled_plot.removeAttribute("onmousemove");
+            time_scaled_plot.removeAttribute("onmouseleave");
+            dl_link = "data:text/plain;charset=utf-8," + encodeURIComponent(time_scaled_plot.outerHTML);
+          } else if (this._elements.nd) {
+            let time_agnostic_plot = this._elements.time_agnostic_plot.cloneNode(true);
+            time_agnostic_plot.removeAttribute("onmousemove");
+            time_agnostic_plot.removeAttribute("onmouseleave");
+            dl_link = "data:text/plain;charset=utf-8," + encodeURIComponent(time_agnostic_plot.outerHTML);
+          } else {
+            dl_link = "data:text/plain;charset=utf-8," + encodeURIComponent(this._elements.plot_1d.outerHTML);
+          }
+          let dl = document.createElement("a");
+          document.body.appendChild(dl);
+          dl.setAttribute("href", dl_link);
+          dl.setAttribute("download", "pt9" + ".clustering_plot.svg");
+          dl.click();
+        },
+
+        _destroy: function() {
+          this.element.context.innerHTML = "";
+        }
+
+      });
+
+      $("#clustering-plot").clustering_plot({"cluster_dict": {"1": {"ccf_hat": [0.94, 0.88, 0.92], "tumor_abundance": [0.96, 0.98, 1.0], "ccf_high": [1.0, 1.0, 1.0], "color": "rgb(39,140,24)", "drivers": [], "ccf_low": [0.87, 0.75, 0.83], "muts": {"ADAMTS16_None": {"ref_cnt": ["15", "24", "37"], "ccf_hat": [0.94, 0.88, 0.92], "alt_cnt": ["22", "22", "36"], "chrom": "5", "pos": "5303783"}, "SLA_None": {"ref_cnt": ["23", "16", "40"], "ccf_hat": [0.63, 0.83, 0.57], "alt_cnt": ["7", "13", "14"], "chrom": "8", "pos": "134060168"}, "GATS_None": {"ref_cnt": ["12", "8", "17"], "ccf_hat": [0.65, 0.84, 0.81], "alt_cnt": ["4", "9", "12"], "chrom": "7", "pos": "99799033"}}, "line_width": 2.0, "cnvs": {}}, "2": {"ccf_hat": [0.12, 0.19, 0.77], "tumor_abundance": [0.11, 0.18, 0.74], "ccf_high": [0.15, 0.22, 0.81], "color": "rgb(103,200,243)", "drivers": ["KRAS_None"], "ccf_low": [0.09, 0.16, 0.72], "muts": {"VSIG10_None": {"ref_cnt": ["42", "31", "40"], "ccf_hat": [0.12, 0.12, 0.8], "alt_cnt": ["1", "1", "25"], "chrom": "12", "pos": "118519975"}, "CCDC102B_None": {"ref_cnt": ["57", "54", "35"], "ccf_hat": [0.35, 0.37, 0.91], "alt_cnt": ["8", "11", "33"], "chrom": "18", "pos": "66504112"}, "SLC30A3_None": {"ref_cnt": ["66", "41", "67"], "ccf_hat": [0.11, 0.36, 0.64], "alt_cnt": ["2", "8", "28"], "chrom": "2", "pos": "27481696"}, "AGL_None": {"ref_cnt": ["76", "67", "65"], "ccf_hat": [0.13, 0.19, 0.81], "alt_cnt": ["3", "6", "40"], "chrom": "1", "pos": "100361859"}, "PNLIPRP3_None": {"ref_cnt": ["46", "56", "61"], "ccf_hat": [0.11, 0.16, 0.74], "alt_cnt": ["1", "4", "32"], "chrom": "10", "pos": "118231381"}, "CDK15_None": {"ref_cnt": ["83", "82", "77"], "ccf_hat": [0.09, 0.18, 0.78], "alt_cnt": ["2", "7", "44"], "chrom": "2", "pos": "202719622"}, "SMOC1_None": {"ref_cnt": ["8", "12", "14"], "ccf_hat": [0.43, 0.14, 0.8], "alt_cnt": ["1", "0", "10"], "chrom": "14", "pos": "70497098"}, "PCDHB12_None": {"ref_cnt": ["72", "61", "78"], "ccf_hat": [0.14, 0.18, 0.8], "alt_cnt": ["3", "5", "47"], "chrom": "5", "pos": "140590075"}, "KRT25_None": {"ref_cnt": ["45", "40", "36"], "ccf_hat": [0.26, 0.37, 0.87], "alt_cnt": ["4", "8", "28"], "chrom": "17", "pos": "38910718"}, "CPN2_None": {"ref_cnt": ["67", "47", "53"], "ccf_hat": [0.15, 0.23, 0.83], "alt_cnt": ["2", "3", "21"], "chrom": "3", "pos": "194062583"}, "RECQL5_None": {"ref_cnt": ["42", "29", "58"], "ccf_hat": [0.05, 0.39, 0.52], "alt_cnt": ["0", "6", "18"], "chrom": "17", "pos": "73625081"}, "KRAS_None": {"ref_cnt": ["54", "42", "52"], "ccf_hat": [0.14, 0.17, 0.64], "alt_cnt": ["2", "3", "22"], "chrom": "12", "pos": "25398281"}, "SLIT2_None": {"ref_cnt": ["30", "40", "37"], "ccf_hat": [0.16, 0.14, 0.73], "alt_cnt": ["1", "2", "19"], "chrom": "4", "pos": "20598209"}, "BTBD11_None": {"ref_cnt": ["16", "10", "19"], "ccf_hat": [0.28, 0.43, 0.69], "alt_cnt": ["1", "2", "9"], "chrom": "12", "pos": "108006595"}, "RIMS3_None": {"ref_cnt": ["26", "39", "25"], "ccf_hat": [0.26, 0.1, 0.88], "alt_cnt": ["2", "1", "22"], "chrom": "1", "pos": "41092401"}, "SULT1C2_None": {"ref_cnt": ["66", "53", "51"], "ccf_hat": [0.15, 0.11, 0.69], "alt_cnt": ["3", "2", "24"], "chrom": "2", "pos": "108921156"}}, "line_width": 7.0, "cnvs": {}}, "3": {"ccf_hat": [0.62, 0.46, 0.01], "tumor_abundance": [0.56, 0.45, 0.01], "ccf_high": [0.71, 0.53, 0.02], "color": "rgb(248,139,16)", "drivers": [], "ccf_low": [0.53, 0.39, 0.01], "muts": {"APBA1_None": {"ref_cnt": ["141", "140", "244"], "ccf_hat": [0.58, 0.43, 0.02], "alt_cnt": ["39", "37", "1"], "chrom": "9", "pos": "72082799"}, "DCHS2_None": {"ref_cnt": ["63", "69", "125"], "ccf_hat": [0.5, 0.4, 0.01], "alt_cnt": ["14", "16", "0"], "chrom": "4", "pos": "155219624"}, "SMEK1_None": {"ref_cnt": ["15", "13", "28"], "ccf_hat": [0.65, 0.59, 0.07], "alt_cnt": ["5", "5", "0"], "chrom": "14", "pos": "91975925"}, "OR6A2_None": {"ref_cnt": ["45", "43", "93"], "ccf_hat": [0.75, 0.47, 0.05], "alt_cnt": ["18", "12", "1"], "chrom": "11", "pos": "6816700"}, "AXL_None": {"ref_cnt": ["29", "16", "43"], "ccf_hat": [0.78, 0.78, 0.04], "alt_cnt": ["13", "11", "0"], "chrom": "19", "pos": "41754703"}}, "line_width": 3.0, "cnvs": {}}, "4": {"ccf_hat": [0.05, 0.07, 0.24], "tumor_abundance": [0.0, 0.08, 0.23], "ccf_high": [0.08, 0.1, 0.29], "color": "rgb(16,49,41)", "drivers": [], "ccf_low": [0.02, 0.04, 0.19], "muts": {"GPR126_None": {"ref_cnt": ["76", "90", "110"], "ccf_hat": [0.07, 0.04, 0.14], "alt_cnt": ["1", "1", "7"], "chrom": "6", "pos": "142736984"}, "TSR1_None": {"ref_cnt": ["52", "38", "50"], "ccf_hat": [0.04, 0.05, 0.15], "alt_cnt": ["0", "0", "3"], "chrom": "17", "pos": "2228651"}, "TPTE_None": {"ref_cnt": ["141", "136", "192"], "ccf_hat": [0.07, 0.11, 0.33], "alt_cnt": ["3", "7", "34"], "chrom": "21", "pos": "10916407"}}, "line_width": 2.0, "cnvs": {}}, "5": {"ccf_hat": [0.15, 0.13, 0.01], "tumor_abundance": [0.11, 0.1, 0.01], "ccf_high": [0.19, 0.16, 0.01], "color": "rgb(93,119,254)", "drivers": [], "ccf_low": [0.11, 0.09, 0.01], "muts": {"LRP5_None": {"ref_cnt": ["37", "36", "79"], "ccf_hat": [0.25, 0.1, 0.02], "alt_cnt": ["3", "1", "0"], "chrom": "11", "pos": "68192679"}, "OR10AG1_None": {"ref_cnt": ["43", "36", "60"], "ccf_hat": [0.22, 0.2, 0.03], "alt_cnt": ["3", "3", "0"], "chrom": "11", "pos": "55735582"}, "GAK_None": {"ref_cnt": ["28", "24", "37"], "ccf_hat": [0.25, 0.28, 0.05], "alt_cnt": ["2", "3", "0"], "chrom": "4", "pos": "887237"}, "GATAD2B_None": {"ref_cnt": ["96", "85", "149"], "ccf_hat": [0.25, 0.15, 0.01], "alt_cnt": ["9", "6", "0"], "chrom": "1", "pos": "153792153"}, "NDFIP1_None": {"ref_cnt": ["55", "64", "124"], "ccf_hat": [0.18, 0.12, 0.01], "alt_cnt": ["3", "3", "0"], "chrom": "5", "pos": "141517393"}, "PPWD1_None": {"ref_cnt": ["82", "50", "118"], "ccf_hat": [0.18, 0.11, 0.01], "alt_cnt": ["5", "2", "0"], "chrom": "5", "pos": "64872738"}, "APOBEC3A_None": {"ref_cnt": ["52", "40", "103"], "ccf_hat": [0.04, 0.22, 0.02], "alt_cnt": ["0", "4", "0"], "chrom": "22", "pos": "39355620"}, "EXOC1_None": {"ref_cnt": ["50", "38", "65"], "ccf_hat": [0.05, 0.19, 0.03], "alt_cnt": ["0", "3", "0"], "chrom": "4", "pos": "56734691"}, "TAOK2_None": {"ref_cnt": ["16", "21", "34"], "ccf_hat": [0.28, 0.31, 0.05], "alt_cnt": ["1", "3", "0"], "chrom": "16", "pos": "29994548"}, "GABPB1_None": {"ref_cnt": ["72", "65", "115"], "ccf_hat": [0.17, 0.03, 0.01], "alt_cnt": ["4", "0", "0"], "chrom": "15", "pos": "50595263"}, "GINS3_None": {"ref_cnt": ["10", "13", "20"], "ccf_hat": [0.38, 0.45, 0.09], "alt_cnt": ["1", "3", "0"], "chrom": "16", "pos": "58438639"}}, "line_width": 5.0, "cnvs": {}}}, "xlabels": ["T0", "T1", "T2"], "time_points": [0.64, 1.5, 6.37]})
+    });
+  </script>
+  <script>
+    $(function() {
+      $.widget("PhylogicNDT_report.time_switch", {
+
+        options: {show: true},
+
+        _elements: {time_switch: undefined, input: undefined},
+
+        _create: function() {
+          if (this.options.show) {
+            let time_switch = d3.select(document.createElement("label"))
+              .html("Time-scaled");
+            this._elements.input = time_switch.append("input")
+              .attr("type", "checkbox")
+              .attr("checked", "")
+              .attr("onclick", "$(\"#time-switch\").time_switch(\"switch_plot\")")
+              .node();
+
+            this._elements.time_switch = time_switch.node();
+
+            this._refresh()
+
+          }
+        },
+
+        _refresh: function() {
+          this.element.context.innerHTML = this._elements.time_switch.outerHTML;
+        },
+
+        is_checked: function() {
+          if (this.options.show) {
+            return this._elements.input.hasAttribute("checked")
+          }
+          return true
+        },
+
+        switch_plot: function() {
+          if (this.is_checked()) {
+            this._elements.input.removeAttribute("checked");
+          } else {
+            this._elements.input.setAttribute("checked", "");
+          }
+          $("#clustering-plot").clustering_plot("switch_plot");
+
+          this._refresh();
+        }
+
+      });
+
+      $("#time-switch").time_switch({"show": true})
+    });
+  </script>
+  <script>
+    $(function() {
+      $.widget("PhylogicNDT_report.cluster_switches", {
+        options: {
+          cluster_dict: {},
+          time_points: [],
+          xlabels: [],
+          tumor_sizes: {},
+          child_dict: {}
+        },
+
+        _elements: {
+          active_clusters: [],
+          svg_switches: undefined
+        },
+
+        _create: function() {
+          let cluster_dict = this.options.cluster_dict,
+            svg_layout = d3.select(document.createElement("svg"))
+              .attr("baseProfile", "full")
+              .attr("version", "1.1")
+              .attr("xmlns", "http://www.w3.org/2000/svg")
+              .attr("xmlns:ev", "http://www.w3.org/2001/xml-events")
+              .attr("xmlns:xlink", "http://www.w3.org/1999/xlink");
+          for (let c in cluster_dict) {
+            this._elements.active_clusters.push(c);
+          }
+          svg_layout.attr("viewBox", "0 0 120 " + ((this._elements.active_clusters.length + 2) * 30));
+          svg_layout.selectAll("rect")
+            .data(this._elements.active_clusters)
+            .join("rect")
+            .attr("class", "active-cluster")
+            .attr("style", "cursor: pointer;")
+            .attr("cluster", (_, i) => i + 1)
+            .attr("x", 0)
+            .attr("y", (_, i) => i * 30 + 30)
+            .attr("width", 20)
+            .attr("height", 20)
+            .attr("fill", d => cluster_dict[d].color)
+            .attr("stroke", "none")
+            .attr("opacity", 0.8)
+            .attr("onclick", "$(\"#cluster-switches\").cluster_switches(\"toggle_cluster\", this)");
+          svg_layout.selectAll("text")
+            .data(this._elements.active_clusters)
+            .join("text")
+            .attr("x", 30)
+            .attr("y", (_, i) => i * 30 + 45)
+            .attr("fill", d => cluster_dict[d].color)
+            .text(d => d + " (" + Object.keys(cluster_dict[d].muts).length.toString() + ")");
+          svg_layout.append("text")
+            .attr("x", 0)
+            .attr("y", 15)
+            .attr("font-size", "11.5px")
+            .text("Cluster (# variants)");
+
+          this._elements.svg_switches = svg_layout.node();
+
+          this._refresh();
+        },
+
+        _refresh: function() {
+          this.element.context.innerHTML = this._elements.svg_switches.outerHTML;
+        },
+
+        toggle_cluster: function(cluster_switch) {
+          let c = cluster_switch.getAttribute("cluster"),
+            cluster_dict = this.options.cluster_dict,
+            child_dict = this.options.child_dict,
+            active_clusters = this._elements.active_clusters,
+            cluster_dict_subset = {},
+            altered_child_dict = {};
+          if (cluster_switch.getAttribute("class") === "active-cluster") {
+            cluster_switch.setAttribute("class", "removed-cluster");
+            for (let i in active_clusters) {
+              if (active_clusters[i] === c) {
+                active_clusters.splice(i, 1);
+                break;
+              }
+            }
+          } else {
+            cluster_switch.setAttribute("class", "active-cluster");
+            active_clusters.push(c);
+          }
+
+          let get_new_children = function(cluster) {
+            let children = [];
+            for (let i in child_dict[cluster]) {
+              if (active_clusters.includes(child_dict[cluster][i].toString())) {
+                children.push(child_dict[cluster][i])
+              } else {
+                children.push(...get_new_children(child_dict[cluster][i]))
+              }
+            }
+            return children
+          };
+
+          for (let i in active_clusters) {
+            let active_cluster = active_clusters[i];
+            cluster_dict_subset[active_cluster] = cluster_dict[active_cluster];
+            if (child_dict) {
+              altered_child_dict[active_cluster] = get_new_children(active_cluster)
+            }
+          }
+          if (child_dict) {
+            altered_child_dict[null] = get_new_children(null);
+          }
+
+          let clustering_plot = $("#clustering-plot");
+          clustering_plot.clustering_plot("destroy");
+          clustering_plot.clustering_plot({
+            xlabels: this.options.xlabels,
+            time_points: this.options.time_points,
+            cluster_dict: cluster_dict_subset});
+          if (!$("#time-switch").time_switch("is_checked")) {
+            clustering_plot.clustering_plot("switch_plot");
+          }
+
+          let mutation_plot = $("#mutation-plot");
+          mutation_plot.mutation_plot("destroy");
+          mutation_plot.mutation_plot({
+            xlabels: this.options.xlabels,
+            cluster_dict: cluster_dict_subset});
+
+          if (child_dict) {
+            let fish_plot = $("#fish-plot");
+            fish_plot.fish_plot("destroy");
+            fish_plot.fish_plot({
+              xlabels: this.options.xlabels,
+              time_points: this.options.time_points,
+              tumor_sizes: this.options.tumor_sizes,
+              cluster_dict: cluster_dict_subset,
+              child_dict: altered_child_dict
+            })
+          }
+        }
+      });
+
+      $("#cluster-switches").cluster_switches({"cluster_dict": {"1": {"ccf_hat": [0.94, 0.88, 0.92], "tumor_abundance": [0.96, 0.98, 1.0], "ccf_high": [1.0, 1.0, 1.0], "color": "rgb(39,140,24)", "drivers": [], "ccf_low": [0.87, 0.75, 0.83], "muts": {"ADAMTS16_None": {"ref_cnt": ["15", "24", "37"], "ccf_hat": [0.94, 0.88, 0.92], "alt_cnt": ["22", "22", "36"], "chrom": "5", "pos": "5303783"}, "SLA_None": {"ref_cnt": ["23", "16", "40"], "ccf_hat": [0.63, 0.83, 0.57], "alt_cnt": ["7", "13", "14"], "chrom": "8", "pos": "134060168"}, "GATS_None": {"ref_cnt": ["12", "8", "17"], "ccf_hat": [0.65, 0.84, 0.81], "alt_cnt": ["4", "9", "12"], "chrom": "7", "pos": "99799033"}}, "line_width": 2.0, "cnvs": {}}, "2": {"ccf_hat": [0.12, 0.19, 0.77], "tumor_abundance": [0.11, 0.18, 0.74], "ccf_high": [0.15, 0.22, 0.81], "color": "rgb(103,200,243)", "drivers": ["KRAS_None"], "ccf_low": [0.09, 0.16, 0.72], "muts": {"VSIG10_None": {"ref_cnt": ["42", "31", "40"], "ccf_hat": [0.12, 0.12, 0.8], "alt_cnt": ["1", "1", "25"], "chrom": "12", "pos": "118519975"}, "CCDC102B_None": {"ref_cnt": ["57", "54", "35"], "ccf_hat": [0.35, 0.37, 0.91], "alt_cnt": ["8", "11", "33"], "chrom": "18", "pos": "66504112"}, "SLC30A3_None": {"ref_cnt": ["66", "41", "67"], "ccf_hat": [0.11, 0.36, 0.64], "alt_cnt": ["2", "8", "28"], "chrom": "2", "pos": "27481696"}, "AGL_None": {"ref_cnt": ["76", "67", "65"], "ccf_hat": [0.13, 0.19, 0.81], "alt_cnt": ["3", "6", "40"], "chrom": "1", "pos": "100361859"}, "PNLIPRP3_None": {"ref_cnt": ["46", "56", "61"], "ccf_hat": [0.11, 0.16, 0.74], "alt_cnt": ["1", "4", "32"], "chrom": "10", "pos": "118231381"}, "CDK15_None": {"ref_cnt": ["83", "82", "77"], "ccf_hat": [0.09, 0.18, 0.78], "alt_cnt": ["2", "7", "44"], "chrom": "2", "pos": "202719622"}, "SMOC1_None": {"ref_cnt": ["8", "12", "14"], "ccf_hat": [0.43, 0.14, 0.8], "alt_cnt": ["1", "0", "10"], "chrom": "14", "pos": "70497098"}, "PCDHB12_None": {"ref_cnt": ["72", "61", "78"], "ccf_hat": [0.14, 0.18, 0.8], "alt_cnt": ["3", "5", "47"], "chrom": "5", "pos": "140590075"}, "KRT25_None": {"ref_cnt": ["45", "40", "36"], "ccf_hat": [0.26, 0.37, 0.87], "alt_cnt": ["4", "8", "28"], "chrom": "17", "pos": "38910718"}, "CPN2_None": {"ref_cnt": ["67", "47", "53"], "ccf_hat": [0.15, 0.23, 0.83], "alt_cnt": ["2", "3", "21"], "chrom": "3", "pos": "194062583"}, "RECQL5_None": {"ref_cnt": ["42", "29", "58"], "ccf_hat": [0.05, 0.39, 0.52], "alt_cnt": ["0", "6", "18"], "chrom": "17", "pos": "73625081"}, "KRAS_None": {"ref_cnt": ["54", "42", "52"], "ccf_hat": [0.14, 0.17, 0.64], "alt_cnt": ["2", "3", "22"], "chrom": "12", "pos": "25398281"}, "SLIT2_None": {"ref_cnt": ["30", "40", "37"], "ccf_hat": [0.16, 0.14, 0.73], "alt_cnt": ["1", "2", "19"], "chrom": "4", "pos": "20598209"}, "BTBD11_None": {"ref_cnt": ["16", "10", "19"], "ccf_hat": [0.28, 0.43, 0.69], "alt_cnt": ["1", "2", "9"], "chrom": "12", "pos": "108006595"}, "RIMS3_None": {"ref_cnt": ["26", "39", "25"], "ccf_hat": [0.26, 0.1, 0.88], "alt_cnt": ["2", "1", "22"], "chrom": "1", "pos": "41092401"}, "SULT1C2_None": {"ref_cnt": ["66", "53", "51"], "ccf_hat": [0.15, 0.11, 0.69], "alt_cnt": ["3", "2", "24"], "chrom": "2", "pos": "108921156"}}, "line_width": 7.0, "cnvs": {}}, "3": {"ccf_hat": [0.62, 0.46, 0.01], "tumor_abundance": [0.56, 0.45, 0.01], "ccf_high": [0.71, 0.53, 0.02], "color": "rgb(248,139,16)", "drivers": [], "ccf_low": [0.53, 0.39, 0.01], "muts": {"APBA1_None": {"ref_cnt": ["141", "140", "244"], "ccf_hat": [0.58, 0.43, 0.02], "alt_cnt": ["39", "37", "1"], "chrom": "9", "pos": "72082799"}, "DCHS2_None": {"ref_cnt": ["63", "69", "125"], "ccf_hat": [0.5, 0.4, 0.01], "alt_cnt": ["14", "16", "0"], "chrom": "4", "pos": "155219624"}, "SMEK1_None": {"ref_cnt": ["15", "13", "28"], "ccf_hat": [0.65, 0.59, 0.07], "alt_cnt": ["5", "5", "0"], "chrom": "14", "pos": "91975925"}, "OR6A2_None": {"ref_cnt": ["45", "43", "93"], "ccf_hat": [0.75, 0.47, 0.05], "alt_cnt": ["18", "12", "1"], "chrom": "11", "pos": "6816700"}, "AXL_None": {"ref_cnt": ["29", "16", "43"], "ccf_hat": [0.78, 0.78, 0.04], "alt_cnt": ["13", "11", "0"], "chrom": "19", "pos": "41754703"}}, "line_width": 3.0, "cnvs": {}}, "4": {"ccf_hat": [0.05, 0.07, 0.24], "tumor_abundance": [0.0, 0.08, 0.23], "ccf_high": [0.08, 0.1, 0.29], "color": "rgb(16,49,41)", "drivers": [], "ccf_low": [0.02, 0.04, 0.19], "muts": {"GPR126_None": {"ref_cnt": ["76", "90", "110"], "ccf_hat": [0.07, 0.04, 0.14], "alt_cnt": ["1", "1", "7"], "chrom": "6", "pos": "142736984"}, "TSR1_None": {"ref_cnt": ["52", "38", "50"], "ccf_hat": [0.04, 0.05, 0.15], "alt_cnt": ["0", "0", "3"], "chrom": "17", "pos": "2228651"}, "TPTE_None": {"ref_cnt": ["141", "136", "192"], "ccf_hat": [0.07, 0.11, 0.33], "alt_cnt": ["3", "7", "34"], "chrom": "21", "pos": "10916407"}}, "line_width": 2.0, "cnvs": {}}, "5": {"ccf_hat": [0.15, 0.13, 0.01], "tumor_abundance": [0.11, 0.1, 0.01], "ccf_high": [0.19, 0.16, 0.01], "color": "rgb(93,119,254)", "drivers": [], "ccf_low": [0.11, 0.09, 0.01], "muts": {"LRP5_None": {"ref_cnt": ["37", "36", "79"], "ccf_hat": [0.25, 0.1, 0.02], "alt_cnt": ["3", "1", "0"], "chrom": "11", "pos": "68192679"}, "OR10AG1_None": {"ref_cnt": ["43", "36", "60"], "ccf_hat": [0.22, 0.2, 0.03], "alt_cnt": ["3", "3", "0"], "chrom": "11", "pos": "55735582"}, "GAK_None": {"ref_cnt": ["28", "24", "37"], "ccf_hat": [0.25, 0.28, 0.05], "alt_cnt": ["2", "3", "0"], "chrom": "4", "pos": "887237"}, "GATAD2B_None": {"ref_cnt": ["96", "85", "149"], "ccf_hat": [0.25, 0.15, 0.01], "alt_cnt": ["9", "6", "0"], "chrom": "1", "pos": "153792153"}, "NDFIP1_None": {"ref_cnt": ["55", "64", "124"], "ccf_hat": [0.18, 0.12, 0.01], "alt_cnt": ["3", "3", "0"], "chrom": "5", "pos": "141517393"}, "PPWD1_None": {"ref_cnt": ["82", "50", "118"], "ccf_hat": [0.18, 0.11, 0.01], "alt_cnt": ["5", "2", "0"], "chrom": "5", "pos": "64872738"}, "APOBEC3A_None": {"ref_cnt": ["52", "40", "103"], "ccf_hat": [0.04, 0.22, 0.02], "alt_cnt": ["0", "4", "0"], "chrom": "22", "pos": "39355620"}, "EXOC1_None": {"ref_cnt": ["50", "38", "65"], "ccf_hat": [0.05, 0.19, 0.03], "alt_cnt": ["0", "3", "0"], "chrom": "4", "pos": "56734691"}, "TAOK2_None": {"ref_cnt": ["16", "21", "34"], "ccf_hat": [0.28, 0.31, 0.05], "alt_cnt": ["1", "3", "0"], "chrom": "16", "pos": "29994548"}, "GABPB1_None": {"ref_cnt": ["72", "65", "115"], "ccf_hat": [0.17, 0.03, 0.01], "alt_cnt": ["4", "0", "0"], "chrom": "15", "pos": "50595263"}, "GINS3_None": {"ref_cnt": ["10", "13", "20"], "ccf_hat": [0.38, 0.45, 0.09], "alt_cnt": ["1", "3", "0"], "chrom": "16", "pos": "58438639"}}, "line_width": 5.0, "cnvs": {}}}, "xlabels": ["T0", "T1", "T2"], "child_dict": {"1": [2, 3], "2": [4, 5], "3": [], "4": [], "5": [], "null": [1]}, "time_points": [0.64, 1.5, 6.37], "tumor_sizes": [[0.64, 1.0], [1.5, 1.0], [6.37, 1.0]]})
+    })
+  </script>
+  <script>
+    $(function() {
+      $.widget("PhylogicNDT_report.tree", {
+
+        options: {
+          patient: "",
+          child_dict: {},
+          tree_coordinates: {},
+          cluster_dict: {}
+        },
+
+        _elements: {
+          svg_tree: undefined,
+          branch_trunc_labels: {},
+          branch_full_labels: {}
+        },
+
+        _create: function() {
+          let patient = this.options.patient,
+            child_dict = this.options.child_dict,
+            tree_coordinates = this.options.tree_coordinates,
+            cluster_dict = this.options.cluster_dict,
+            clusters = Object.keys(tree_coordinates),
+            edges = [];
+
+          for (let parent in child_dict) {
+            child_dict[parent].forEach(function(child) {
+              edges.push([parent, child])
+            })
+          }
+
+          let svg_tree = d3.select(document.createElement("svg"))
+            .attr("baseProfile", "full")
+            .attr("version", "1.1")
+            .attr("xmlns", "http://www.w3.org/2000/svg")
+            .attr("xmlns:ev", "http://www.w3.org/2001/xml-events")
+            .attr("xmlns:xlink", "http://www.w3.org/1999/xlink")
+            .attr("overflow", "visible")
+            .attr("style", "max-height: 600px;")
+            .attr("width", this.element.context.parentNode.getBoundingClientRect().width);
+          svg_tree.append("g")
+            .append("text")
+              .attr("x", -20)
+              .attr("y", 40)
+              .attr("text-anchor", "end")
+              .attr("font", "Arial")
+              .attr("font-size", "20px")
+              .html(patient);
+
+          let branch_cont = svg_tree.append("g")
+            .selectAll("line")
+            .data(edges)
+            .join("line")
+            .attr("x1", d => tree_coordinates[d[0]][0])
+            .attr("y1", d => tree_coordinates[d[0]][1])
+            .attr("x2", d => tree_coordinates[d[1]][0])
+            .attr("y2", d => tree_coordinates[d[1]][1])
+            .attr("stroke", d => cluster_dict[d[1]].color)
+            .attr("stroke-width", 8)
+            .attr("opacity", 1.0)
+            .attr("class", d => d[1]);
+
+          let node_cont = svg_tree.append("g")
+            .selectAll("circle")
+            .data(clusters)
+            .join("circle")
+            .attr("cx", d => tree_coordinates[d][0])
+            .attr("cy", d => tree_coordinates[d][1])
+            .attr("r", d => d !== "null" ? 12 : 24)
+            .attr("stroke", "white")
+            .attr("stroke-width", 1)
+            .attr("fill", d => d !== "null" ? cluster_dict[d].color : "blue")
+            .attr("opacity", 1.0);
+
+          let node_label_cont = svg_tree.append("g")
+            .selectAll("text")
+            .data(clusters)
+            .join("text")
+            .attr("x", d => tree_coordinates[d][0])
+            .attr("y", d => tree_coordinates[d][1] + 5)
+            .attr("text-anchor", "middle")
+            .attr("fill", "white")
+            .text(d => d !== "null" ? d : "normal");
+
+          let branch_label_cont = svg_tree.append("g"),
+            branch_trunc_labels = {},
+            branch_full_labels = {};
+          for (let e in edges) {
+            let edge = edges[e],
+              cnvs = Object.keys(cluster_dict[edge[1]].muts).filter(m => m.startsWith("loss") || m.startsWith("gain") || m === "WGD"),
+              branch_height = Math.abs(tree_coordinates[edge[0]][1] - tree_coordinates[edge[1]][1]),
+              n_labels = Math.max(4, branch_height / 10 - 2),
+              label_list = [Object.keys(cluster_dict[edge[1]].muts).length, ...cluster_dict[edge[1]].drivers, ...cnvs],
+              truncate = label_list.length > n_labels + 1,
+              trunc_labels = truncate ? [...label_list.slice(0, n_labels), "..."] : label_list;
+            branch_trunc_labels[edge[1]] = (trunc_labels);
+            branch_full_labels[edge[1]] = (label_list);
+            branch_label_cont.append("text")
+              .attr("y", (tree_coordinates[edge[0]][1] + tree_coordinates[edge[1]][1]) / 2 - (5 * (trunc_labels.length)))
+              .attr("text-anchor", "middle")
+              .attr("font-size", 10)
+              .attr("font-weight", "bold")
+              .attr("parent", edge[0])
+              .attr("child", edge[1])
+              .selectAll("tspan")
+              .data(trunc_labels)
+              .join("tspan")
+              .attr("x", (tree_coordinates[edge[0]][0] + tree_coordinates[edge[1]][0]) / 2)
+              .attr("dy", 10)
+              .attr("onclick", d => d === "..." ? "$(\"#tree\").tree(\"expand\", this)" : "")
+              .attr("style", d => d === "..." ? "cursor: pointer;" : "")
+              .text((d, i) => i ? d : "(" + d + ")");
+          }
+
+          let x_values = Object.values(tree_coordinates).map(p => p[0]),
+            y_values = Object.values(tree_coordinates).map(p => p[1]),
+            x_min = Math.min(...x_values),
+            x_max = Math.max(...x_values),
+            y_min = Math.min(...y_values),
+            y_max = Math.max(...y_values),
+            view_x_min = x_max - x_min > 300 ? x_min - 50 : (x_min + x_max) / 2 - 200,
+            view_y_min = y_max - y_min > 400 ? y_min - 50 : (y_min + y_max) / 2 - 250,
+            view_width = x_max - x_min > 300 ? x_max - x_min + 100 : 400,
+            view_height = y_max - y_min > 400 ? y_max - y_min + 100 : 500;
+
+          svg_tree.attr("viewBox", [view_x_min, view_y_min, view_width, view_height].join(","));
+
+          this._elements.svg_tree = svg_tree.node();
+          this._elements.branch_full_labels = branch_full_labels;
+          this._elements.branch_trunc_labels = branch_trunc_labels;
+
+          this._refresh();
+        },
+
+        _refresh: function() {
+          this.element.context.innerHTML = this._elements.svg_tree.outerHTML;
+        },
+
+        download: function() {
+          let dl_link = "data:text/plain;charset=utf-8," + encodeURIComponent(this._elements.svg_tree.outerHTML.replace("viewbox", "viewBox")),
+            dl = document.createElement("a");
+          document.body.appendChild(dl);
+          dl.setAttribute("href", dl_link);
+          dl.setAttribute("download", "pt9" + ".tree.svg");
+          dl.click();
+        },
+
+        expand: function(label) {
+          let branch_label = d3.select(label.parentElement),
+            parent = branch_label.attr("parent"),
+            child = branch_label.attr("child"),
+            label_list = [...this._elements.branch_full_labels[child], "Condense ^"],
+            tree_coordinates = this.options.tree_coordinates;
+          branch_label
+            .attr("y", (tree_coordinates[parent][1] + tree_coordinates[child][1]) / 2 - (5 * (label_list.length)))
+            .selectAll("tspan")
+            .data(label_list)
+            .join("tspan")
+            .attr("x", (tree_coordinates[parent][0] + tree_coordinates[child][0]) / 2)
+            .attr("dy", 10)
+            .attr("onclick", d => d === "Condense ^" ? "$(\"#tree\").tree(\"condense\", this)" : "")
+            .attr("style", d => d === "Condense ^" ? "cursor: pointer;" : "")
+            .text((d, i) => i ? d : "(" + d + ")")
+        },
+
+        condense: function(label) {
+          let branch_label = d3.select(label.parentElement),
+            parent = branch_label.attr("parent"),
+            child = branch_label.attr("child"),
+            trunc_labels = this._elements.branch_trunc_labels[child],
+            tree_coordinates = this.options.tree_coordinates;
+          branch_label
+            .attr("y", (tree_coordinates[parent][1] + tree_coordinates[child][1]) / 2 - (5 * (trunc_labels.length)))
+            .selectAll("tspan")
+            .data(trunc_labels)
+            .join("tspan")
+            .attr("x", (tree_coordinates[parent][0] + tree_coordinates[child][0]) / 2)
+            .attr("dy", 10)
+            .attr("onclick", d => d === "..." ? "$(\"#tree\").tree(\"expand\", this)" : "")
+            .attr("style", d => d === "..." ? "cursor: pointer;" : "")
+            .text((d, i) => i ? d : "(" + d + ")")
+        },
+
+        _destroy: function() {
+          this.element.context.innerHTML = ""
+        }
+
+      });
+
+      let tree_options = {"tree_coordinates": {"1": [0.0, 200.0], "2": [96.86264665955594, 367.7710253699426], "3": [-140.0870297951053, 317.54697503379356], "4": [63.54842193163867, 492.1014046692974], "5": [254.88352437253175, 410.11259194039167], "null": [0.0, 0.0]}, "cluster_dict": {"1": {"ccf_hat": [0.94, 0.88, 0.92], "tumor_abundance": [0.96, 0.98, 1.0], "ccf_high": [1.0, 1.0, 1.0], "color": "rgb(39,140,24)", "drivers": [], "ccf_low": [0.87, 0.75, 0.83], "muts": {"ADAMTS16_None": {"ref_cnt": ["15", "24", "37"], "ccf_hat": [0.94, 0.88, 0.92], "alt_cnt": ["22", "22", "36"], "chrom": "5", "pos": "5303783"}, "SLA_None": {"ref_cnt": ["23", "16", "40"], "ccf_hat": [0.63, 0.83, 0.57], "alt_cnt": ["7", "13", "14"], "chrom": "8", "pos": "134060168"}, "GATS_None": {"ref_cnt": ["12", "8", "17"], "ccf_hat": [0.65, 0.84, 0.81], "alt_cnt": ["4", "9", "12"], "chrom": "7", "pos": "99799033"}}, "line_width": 2.0, "cnvs": {}}, "2": {"ccf_hat": [0.12, 0.19, 0.77], "tumor_abundance": [0.11, 0.18, 0.74], "ccf_high": [0.15, 0.22, 0.81], "color": "rgb(103,200,243)", "drivers": ["KRAS_None"], "ccf_low": [0.09, 0.16, 0.72], "muts": {"VSIG10_None": {"ref_cnt": ["42", "31", "40"], "ccf_hat": [0.12, 0.12, 0.8], "alt_cnt": ["1", "1", "25"], "chrom": "12", "pos": "118519975"}, "CCDC102B_None": {"ref_cnt": ["57", "54", "35"], "ccf_hat": [0.35, 0.37, 0.91], "alt_cnt": ["8", "11", "33"], "chrom": "18", "pos": "66504112"}, "SLC30A3_None": {"ref_cnt": ["66", "41", "67"], "ccf_hat": [0.11, 0.36, 0.64], "alt_cnt": ["2", "8", "28"], "chrom": "2", "pos": "27481696"}, "AGL_None": {"ref_cnt": ["76", "67", "65"], "ccf_hat": [0.13, 0.19, 0.81], "alt_cnt": ["3", "6", "40"], "chrom": "1", "pos": "100361859"}, "PNLIPRP3_None": {"ref_cnt": ["46", "56", "61"], "ccf_hat": [0.11, 0.16, 0.74], "alt_cnt": ["1", "4", "32"], "chrom": "10", "pos": "118231381"}, "CDK15_None": {"ref_cnt": ["83", "82", "77"], "ccf_hat": [0.09, 0.18, 0.78], "alt_cnt": ["2", "7", "44"], "chrom": "2", "pos": "202719622"}, "SMOC1_None": {"ref_cnt": ["8", "12", "14"], "ccf_hat": [0.43, 0.14, 0.8], "alt_cnt": ["1", "0", "10"], "chrom": "14", "pos": "70497098"}, "PCDHB12_None": {"ref_cnt": ["72", "61", "78"], "ccf_hat": [0.14, 0.18, 0.8], "alt_cnt": ["3", "5", "47"], "chrom": "5", "pos": "140590075"}, "KRT25_None": {"ref_cnt": ["45", "40", "36"], "ccf_hat": [0.26, 0.37, 0.87], "alt_cnt": ["4", "8", "28"], "chrom": "17", "pos": "38910718"}, "CPN2_None": {"ref_cnt": ["67", "47", "53"], "ccf_hat": [0.15, 0.23, 0.83], "alt_cnt": ["2", "3", "21"], "chrom": "3", "pos": "194062583"}, "RECQL5_None": {"ref_cnt": ["42", "29", "58"], "ccf_hat": [0.05, 0.39, 0.52], "alt_cnt": ["0", "6", "18"], "chrom": "17", "pos": "73625081"}, "KRAS_None": {"ref_cnt": ["54", "42", "52"], "ccf_hat": [0.14, 0.17, 0.64], "alt_cnt": ["2", "3", "22"], "chrom": "12", "pos": "25398281"}, "SLIT2_None": {"ref_cnt": ["30", "40", "37"], "ccf_hat": [0.16, 0.14, 0.73], "alt_cnt": ["1", "2", "19"], "chrom": "4", "pos": "20598209"}, "BTBD11_None": {"ref_cnt": ["16", "10", "19"], "ccf_hat": [0.28, 0.43, 0.69], "alt_cnt": ["1", "2", "9"], "chrom": "12", "pos": "108006595"}, "RIMS3_None": {"ref_cnt": ["26", "39", "25"], "ccf_hat": [0.26, 0.1, 0.88], "alt_cnt": ["2", "1", "22"], "chrom": "1", "pos": "41092401"}, "SULT1C2_None": {"ref_cnt": ["66", "53", "51"], "ccf_hat": [0.15, 0.11, 0.69], "alt_cnt": ["3", "2", "24"], "chrom": "2", "pos": "108921156"}}, "line_width": 7.0, "cnvs": {}}, "3": {"ccf_hat": [0.62, 0.46, 0.01], "tumor_abundance": [0.56, 0.45, 0.01], "ccf_high": [0.71, 0.53, 0.02], "color": "rgb(248,139,16)", "drivers": [], "ccf_low": [0.53, 0.39, 0.01], "muts": {"APBA1_None": {"ref_cnt": ["141", "140", "244"], "ccf_hat": [0.58, 0.43, 0.02], "alt_cnt": ["39", "37", "1"], "chrom": "9", "pos": "72082799"}, "DCHS2_None": {"ref_cnt": ["63", "69", "125"], "ccf_hat": [0.5, 0.4, 0.01], "alt_cnt": ["14", "16", "0"], "chrom": "4", "pos": "155219624"}, "SMEK1_None": {"ref_cnt": ["15", "13", "28"], "ccf_hat": [0.65, 0.59, 0.07], "alt_cnt": ["5", "5", "0"], "chrom": "14", "pos": "91975925"}, "OR6A2_None": {"ref_cnt": ["45", "43", "93"], "ccf_hat": [0.75, 0.47, 0.05], "alt_cnt": ["18", "12", "1"], "chrom": "11", "pos": "6816700"}, "AXL_None": {"ref_cnt": ["29", "16", "43"], "ccf_hat": [0.78, 0.78, 0.04], "alt_cnt": ["13", "11", "0"], "chrom": "19", "pos": "41754703"}}, "line_width": 3.0, "cnvs": {}}, "4": {"ccf_hat": [0.05, 0.07, 0.24], "tumor_abundance": [0.0, 0.08, 0.23], "ccf_high": [0.08, 0.1, 0.29], "color": "rgb(16,49,41)", "drivers": [], "ccf_low": [0.02, 0.04, 0.19], "muts": {"GPR126_None": {"ref_cnt": ["76", "90", "110"], "ccf_hat": [0.07, 0.04, 0.14], "alt_cnt": ["1", "1", "7"], "chrom": "6", "pos": "142736984"}, "TSR1_None": {"ref_cnt": ["52", "38", "50"], "ccf_hat": [0.04, 0.05, 0.15], "alt_cnt": ["0", "0", "3"], "chrom": "17", "pos": "2228651"}, "TPTE_None": {"ref_cnt": ["141", "136", "192"], "ccf_hat": [0.07, 0.11, 0.33], "alt_cnt": ["3", "7", "34"], "chrom": "21", "pos": "10916407"}}, "line_width": 2.0, "cnvs": {}}, "5": {"ccf_hat": [0.15, 0.13, 0.01], "tumor_abundance": [0.11, 0.1, 0.01], "ccf_high": [0.19, 0.16, 0.01], "color": "rgb(93,119,254)", "drivers": [], "ccf_low": [0.11, 0.09, 0.01], "muts": {"LRP5_None": {"ref_cnt": ["37", "36", "79"], "ccf_hat": [0.25, 0.1, 0.02], "alt_cnt": ["3", "1", "0"], "chrom": "11", "pos": "68192679"}, "OR10AG1_None": {"ref_cnt": ["43", "36", "60"], "ccf_hat": [0.22, 0.2, 0.03], "alt_cnt": ["3", "3", "0"], "chrom": "11", "pos": "55735582"}, "GAK_None": {"ref_cnt": ["28", "24", "37"], "ccf_hat": [0.25, 0.28, 0.05], "alt_cnt": ["2", "3", "0"], "chrom": "4", "pos": "887237"}, "GATAD2B_None": {"ref_cnt": ["96", "85", "149"], "ccf_hat": [0.25, 0.15, 0.01], "alt_cnt": ["9", "6", "0"], "chrom": "1", "pos": "153792153"}, "NDFIP1_None": {"ref_cnt": ["55", "64", "124"], "ccf_hat": [0.18, 0.12, 0.01], "alt_cnt": ["3", "3", "0"], "chrom": "5", "pos": "141517393"}, "PPWD1_None": {"ref_cnt": ["82", "50", "118"], "ccf_hat": [0.18, 0.11, 0.01], "alt_cnt": ["5", "2", "0"], "chrom": "5", "pos": "64872738"}, "APOBEC3A_None": {"ref_cnt": ["52", "40", "103"], "ccf_hat": [0.04, 0.22, 0.02], "alt_cnt": ["0", "4", "0"], "chrom": "22", "pos": "39355620"}, "EXOC1_None": {"ref_cnt": ["50", "38", "65"], "ccf_hat": [0.05, 0.19, 0.03], "alt_cnt": ["0", "3", "0"], "chrom": "4", "pos": "56734691"}, "TAOK2_None": {"ref_cnt": ["16", "21", "34"], "ccf_hat": [0.28, 0.31, 0.05], "alt_cnt": ["1", "3", "0"], "chrom": "16", "pos": "29994548"}, "GABPB1_None": {"ref_cnt": ["72", "65", "115"], "ccf_hat": [0.17, 0.03, 0.01], "alt_cnt": ["4", "0", "0"], "chrom": "15", "pos": "50595263"}, "GINS3_None": {"ref_cnt": ["10", "13", "20"], "ccf_hat": [0.38, 0.45, 0.09], "alt_cnt": ["1", "3", "0"], "chrom": "16", "pos": "58438639"}}, "line_width": 5.0, "cnvs": {}}}, "child_dict": {"1": [2, 3], "2": [4, 5], "3": [], "4": [], "5": [], "null": [1]}, "patient": "pt9"};
+
+      if (tree_options) {
+        let tree_div = $("#tree");
+        d3.select(tree_div[0].parentElement).append("button")
+          .attr("onclick", "$(\"#tree\").tree(\"download\")")
+          .attr("style", "font-size: 12px;")
+          .html("Download as SVG");
+        tree_div.tree(tree_options)
+      } else {
+        $("#tree").append("h3")
+          .html("Run BuildTree to display tree")
+      }
+
+    });
+  </script>
+  <script>
+    $(function() {
+      $.widget("PhylogicNDT_report.tree_switch", {
+        options: {
+          patient: "",
+          tree_iterations: [],
+          child_dicts: [],
+          tree_coordinates: [],
+          cluster_dict: {}
+        },
+
+        _create: function() {
+          let tree_iterations = this.options.tree_iterations,
+            widg = this;
+
+          let dropdown = d3.select(this.element.context).append("select")
+            .attr("class", "form-control");
+
+          dropdown.selectAll("option")
+            .data(tree_iterations)
+            .join("option")
+            .html((d, i) => "Tree " + (i + 1) + " (" + d + ")");
+
+          dropdown.on("change", function() {widg.switch_tree(this.selectedIndex)})
+        },
+
+        switch_tree: function(i) {
+          let patient = this.options.patient,
+            child_dicts = this.options.child_dicts,
+            tree_coordinates = this.options.tree_coordinates,
+            cluster_dict = this.options.cluster_dict,
+            tree = $("#tree");
+
+          tree.tree("destroy");
+
+          tree.tree({
+            patient: patient,
+            child_dict: child_dicts[i],
+            tree_coordinates: tree_coordinates[i],
+            cluster_dict: cluster_dict
+          })
+        }
+      });
+
+      let tree_switch_options = {"tree_coordinates": [{"1": [0.0, 200.0], "2": [96.86264665955594, 367.7710253699426], "3": [-140.0870297951053, 317.54697503379356], "4": [63.54842193163867, 492.1014046692974], "5": [254.88352437253175, 410.11259194039167], "null": [0.0, 0.0]}, {"1": [0.0, 200.0], "2": [33.64004415285534, 390.7821708152254], "3": [-158.37061104355033, 291.43531491771927], "4": [55.99139164391014, 517.5429614852023], "5": [184.68312044910618, 249.48569297999776], "null": [0.0, 0.0]}, {"1": [0.0, 200.0], "2": [-50.13979542905824, 387.1242640223552], "3": [158.37061104355033, 291.43531491771927], "4": [-50.13979542905823, 515.840544212328], "5": [335.7264351320254, 322.7079318903017], "null": [0.0, 0.0]}, {"1": [0.0, 200.0], "2": [-50.13979542905824, 387.1242640223552], "3": [104.89028417428217, 349.79885027011505], "4": [-158.40426397551252, 273.86512137618746], "5": [190.47046927532904, 216.66400679805412], "null": [0.0, 0.0]}, {"1": [0.0, 200.0], "2": [-16.8842718282351, 392.98811009076746], "3": [158.37061104355033, 291.43531491771927], "4": [-158.40426397551252, 273.86512137618746], "5": [327.6015686995851, 353.03034622088], "null": [0.0, 0.0]}, {"1": [0.0, 200.0], "2": [16.884271828235168, 392.98811009076746], "3": [-158.37061104355033, 291.43531491771927], "4": [158.40426397551252, 273.86512137618746], "5": [45.29228898790396, 554.097981339785], "null": [0.0, 0.0]}], "cluster_dict": {"1": {"ccf_hat": [0.94, 0.88, 0.92], "tumor_abundance": [0.96, 0.98, 1.0], "ccf_high": [1.0, 1.0, 1.0], "color": "rgb(39,140,24)", "drivers": [], "ccf_low": [0.87, 0.75, 0.83], "muts": {"ADAMTS16_None": {"ref_cnt": ["15", "24", "37"], "ccf_hat": [0.94, 0.88, 0.92], "alt_cnt": ["22", "22", "36"], "chrom": "5", "pos": "5303783"}, "SLA_None": {"ref_cnt": ["23", "16", "40"], "ccf_hat": [0.63, 0.83, 0.57], "alt_cnt": ["7", "13", "14"], "chrom": "8", "pos": "134060168"}, "GATS_None": {"ref_cnt": ["12", "8", "17"], "ccf_hat": [0.65, 0.84, 0.81], "alt_cnt": ["4", "9", "12"], "chrom": "7", "pos": "99799033"}}, "line_width": 2.0, "cnvs": {}}, "2": {"ccf_hat": [0.12, 0.19, 0.77], "tumor_abundance": [0.11, 0.18, 0.74], "ccf_high": [0.15, 0.22, 0.81], "color": "rgb(103,200,243)", "drivers": ["KRAS_None"], "ccf_low": [0.09, 0.16, 0.72], "muts": {"VSIG10_None": {"ref_cnt": ["42", "31", "40"], "ccf_hat": [0.12, 0.12, 0.8], "alt_cnt": ["1", "1", "25"], "chrom": "12", "pos": "118519975"}, "CCDC102B_None": {"ref_cnt": ["57", "54", "35"], "ccf_hat": [0.35, 0.37, 0.91], "alt_cnt": ["8", "11", "33"], "chrom": "18", "pos": "66504112"}, "SLC30A3_None": {"ref_cnt": ["66", "41", "67"], "ccf_hat": [0.11, 0.36, 0.64], "alt_cnt": ["2", "8", "28"], "chrom": "2", "pos": "27481696"}, "AGL_None": {"ref_cnt": ["76", "67", "65"], "ccf_hat": [0.13, 0.19, 0.81], "alt_cnt": ["3", "6", "40"], "chrom": "1", "pos": "100361859"}, "PNLIPRP3_None": {"ref_cnt": ["46", "56", "61"], "ccf_hat": [0.11, 0.16, 0.74], "alt_cnt": ["1", "4", "32"], "chrom": "10", "pos": "118231381"}, "CDK15_None": {"ref_cnt": ["83", "82", "77"], "ccf_hat": [0.09, 0.18, 0.78], "alt_cnt": ["2", "7", "44"], "chrom": "2", "pos": "202719622"}, "SMOC1_None": {"ref_cnt": ["8", "12", "14"], "ccf_hat": [0.43, 0.14, 0.8], "alt_cnt": ["1", "0", "10"], "chrom": "14", "pos": "70497098"}, "PCDHB12_None": {"ref_cnt": ["72", "61", "78"], "ccf_hat": [0.14, 0.18, 0.8], "alt_cnt": ["3", "5", "47"], "chrom": "5", "pos": "140590075"}, "KRT25_None": {"ref_cnt": ["45", "40", "36"], "ccf_hat": [0.26, 0.37, 0.87], "alt_cnt": ["4", "8", "28"], "chrom": "17", "pos": "38910718"}, "CPN2_None": {"ref_cnt": ["67", "47", "53"], "ccf_hat": [0.15, 0.23, 0.83], "alt_cnt": ["2", "3", "21"], "chrom": "3", "pos": "194062583"}, "RECQL5_None": {"ref_cnt": ["42", "29", "58"], "ccf_hat": [0.05, 0.39, 0.52], "alt_cnt": ["0", "6", "18"], "chrom": "17", "pos": "73625081"}, "KRAS_None": {"ref_cnt": ["54", "42", "52"], "ccf_hat": [0.14, 0.17, 0.64], "alt_cnt": ["2", "3", "22"], "chrom": "12", "pos": "25398281"}, "SLIT2_None": {"ref_cnt": ["30", "40", "37"], "ccf_hat": [0.16, 0.14, 0.73], "alt_cnt": ["1", "2", "19"], "chrom": "4", "pos": "20598209"}, "BTBD11_None": {"ref_cnt": ["16", "10", "19"], "ccf_hat": [0.28, 0.43, 0.69], "alt_cnt": ["1", "2", "9"], "chrom": "12", "pos": "108006595"}, "RIMS3_None": {"ref_cnt": ["26", "39", "25"], "ccf_hat": [0.26, 0.1, 0.88], "alt_cnt": ["2", "1", "22"], "chrom": "1", "pos": "41092401"}, "SULT1C2_None": {"ref_cnt": ["66", "53", "51"], "ccf_hat": [0.15, 0.11, 0.69], "alt_cnt": ["3", "2", "24"], "chrom": "2", "pos": "108921156"}}, "line_width": 7.0, "cnvs": {}}, "3": {"ccf_hat": [0.62, 0.46, 0.01], "tumor_abundance": [0.56, 0.45, 0.01], "ccf_high": [0.71, 0.53, 0.02], "color": "rgb(248,139,16)", "drivers": [], "ccf_low": [0.53, 0.39, 0.01], "muts": {"APBA1_None": {"ref_cnt": ["141", "140", "244"], "ccf_hat": [0.58, 0.43, 0.02], "alt_cnt": ["39", "37", "1"], "chrom": "9", "pos": "72082799"}, "DCHS2_None": {"ref_cnt": ["63", "69", "125"], "ccf_hat": [0.5, 0.4, 0.01], "alt_cnt": ["14", "16", "0"], "chrom": "4", "pos": "155219624"}, "SMEK1_None": {"ref_cnt": ["15", "13", "28"], "ccf_hat": [0.65, 0.59, 0.07], "alt_cnt": ["5", "5", "0"], "chrom": "14", "pos": "91975925"}, "OR6A2_None": {"ref_cnt": ["45", "43", "93"], "ccf_hat": [0.75, 0.47, 0.05], "alt_cnt": ["18", "12", "1"], "chrom": "11", "pos": "6816700"}, "AXL_None": {"ref_cnt": ["29", "16", "43"], "ccf_hat": [0.78, 0.78, 0.04], "alt_cnt": ["13", "11", "0"], "chrom": "19", "pos": "41754703"}}, "line_width": 3.0, "cnvs": {}}, "4": {"ccf_hat": [0.05, 0.07, 0.24], "tumor_abundance": [0.0, 0.08, 0.23], "ccf_high": [0.08, 0.1, 0.29], "color": "rgb(16,49,41)", "drivers": [], "ccf_low": [0.02, 0.04, 0.19], "muts": {"GPR126_None": {"ref_cnt": ["76", "90", "110"], "ccf_hat": [0.07, 0.04, 0.14], "alt_cnt": ["1", "1", "7"], "chrom": "6", "pos": "142736984"}, "TSR1_None": {"ref_cnt": ["52", "38", "50"], "ccf_hat": [0.04, 0.05, 0.15], "alt_cnt": ["0", "0", "3"], "chrom": "17", "pos": "2228651"}, "TPTE_None": {"ref_cnt": ["141", "136", "192"], "ccf_hat": [0.07, 0.11, 0.33], "alt_cnt": ["3", "7", "34"], "chrom": "21", "pos": "10916407"}}, "line_width": 2.0, "cnvs": {}}, "5": {"ccf_hat": [0.15, 0.13, 0.01], "tumor_abundance": [0.11, 0.1, 0.01], "ccf_high": [0.19, 0.16, 0.01], "color": "rgb(93,119,254)", "drivers": [], "ccf_low": [0.11, 0.09, 0.01], "muts": {"LRP5_None": {"ref_cnt": ["37", "36", "79"], "ccf_hat": [0.25, 0.1, 0.02], "alt_cnt": ["3", "1", "0"], "chrom": "11", "pos": "68192679"}, "OR10AG1_None": {"ref_cnt": ["43", "36", "60"], "ccf_hat": [0.22, 0.2, 0.03], "alt_cnt": ["3", "3", "0"], "chrom": "11", "pos": "55735582"}, "GAK_None": {"ref_cnt": ["28", "24", "37"], "ccf_hat": [0.25, 0.28, 0.05], "alt_cnt": ["2", "3", "0"], "chrom": "4", "pos": "887237"}, "GATAD2B_None": {"ref_cnt": ["96", "85", "149"], "ccf_hat": [0.25, 0.15, 0.01], "alt_cnt": ["9", "6", "0"], "chrom": "1", "pos": "153792153"}, "NDFIP1_None": {"ref_cnt": ["55", "64", "124"], "ccf_hat": [0.18, 0.12, 0.01], "alt_cnt": ["3", "3", "0"], "chrom": "5", "pos": "141517393"}, "PPWD1_None": {"ref_cnt": ["82", "50", "118"], "ccf_hat": [0.18, 0.11, 0.01], "alt_cnt": ["5", "2", "0"], "chrom": "5", "pos": "64872738"}, "APOBEC3A_None": {"ref_cnt": ["52", "40", "103"], "ccf_hat": [0.04, 0.22, 0.02], "alt_cnt": ["0", "4", "0"], "chrom": "22", "pos": "39355620"}, "EXOC1_None": {"ref_cnt": ["50", "38", "65"], "ccf_hat": [0.05, 0.19, 0.03], "alt_cnt": ["0", "3", "0"], "chrom": "4", "pos": "56734691"}, "TAOK2_None": {"ref_cnt": ["16", "21", "34"], "ccf_hat": [0.28, 0.31, 0.05], "alt_cnt": ["1", "3", "0"], "chrom": "16", "pos": "29994548"}, "GABPB1_None": {"ref_cnt": ["72", "65", "115"], "ccf_hat": [0.17, 0.03, 0.01], "alt_cnt": ["4", "0", "0"], "chrom": "15", "pos": "50595263"}, "GINS3_None": {"ref_cnt": ["10", "13", "20"], "ccf_hat": [0.38, 0.45, 0.09], "alt_cnt": ["1", "3", "0"], "chrom": "16", "pos": "58438639"}}, "line_width": 5.0, "cnvs": {}}}, "child_dicts": [{"1": [2, 3], "2": [4, 5], "3": [], "4": [], "5": [], "null": [1]}, {"1": [2, 3, 5], "2": [4], "3": [], "4": [], "5": [], "null": [1]}, {"1": [2, 3], "2": [4], "3": [5], "4": [], "5": [], "null": [1]}, {"1": [2, 3, 4, 5], "2": [], "3": [], "4": [], "5": [], "null": [1]}, {"1": [2, 3, 4], "2": [], "3": [5], "4": [], "5": [], "null": [1]}, {"1": [2, 3, 4], "2": [5], "3": [], "4": [], "5": [], "null": [1]}], "patient": "pt9", "tree_iterations": ["57", "57", "50", "33", "26", "26"]};
+
+      if (tree_switch_options) {
+        $("#tree-switch").tree_switch(tree_switch_options)
+      }
+    })
+  </script>
+  <script>
+    $(function() {
+      $.widget("PhylogicNDT_report.treatment_plot", {
+
+        options: {
+          width: 500,
+          height: 50,
+          margins: {right: 50, left: 50},
+          treatments: [],
+          samples: [],
+          treatment_color_map: {}
+        },
+
+        _elements: {
+          treatment_plot: undefined,
+          tooltip: undefined
+        },
+
+        _create: function() {
+          const width = this.options.width,
+            height = this.options.height,
+            margins = this.options.margins,
+            treatments = this.options.treatments,
+            samples = this.options.samples,
+            treatment_color_map = this.options.treatment_color_map;
+
+          let t = d3.scaleLinear()
+            .domain([Math.min(...samples), Math.max(...samples)])
+            .range([margins.left, width - margins.right]);
+
+          let xAxis = g => g
+            .attr("transform", "translate(0 " + height.toString() + ")")
+            .call(d3.axisBottom(t));
+
+          let treatment_plot = d3.select(document.createElement("svg"))
+            .attr("baseProfile", "full")
+            .attr("viewBox", "0 0 " + width + " " + (height * 2))
+            .attr("version", "1.1")
+            .attr("xmlns", "http://www.w3.org/2000/svg")
+            .attr("xmlns:ev", "http://www.w3.org/2001/xml-events")
+            .attr("xmlns:xlink", "http://www.w3.org/1999/xlink")
+            .attr("overflow", "visible")
+            .attr("onclick", "$(\"#treatment-plot\").treatment_plot(\"toggle_tx\", event)")
+            .style("max-height", "100px");
+          treatment_plot.append("g")
+            .call(xAxis);
+
+          for (let tx in treatments) {
+            let tx_start = Math.max(treatments[tx].tx_start, samples[0]),
+              tx_end = Math.min(treatments[tx].tx_end, samples[samples.length - 1]);
+            if (tx_end > samples[0] && tx_start < samples[samples.length - 1]) {
+              let color = treatment_color_map[treatments[tx].tx];
+              treatment_plot.append("line")
+                .attr("stroke", color)
+                .attr("stroke-width", 10)
+                .attr("x1", t(tx_start))
+                .attr("x2", t(tx_end))
+                .attr("y1", 25)
+                .attr("y2", 25)
+                .attr("opacity", 1.0)
+                .attr("tx", treatments[tx].tx)
+                .attr("style", "cursor: pointer;")
+            }
+          }
+
+          for (let s in samples) {
+            treatment_plot.append("line")
+              .attr("stroke", "black")
+              .attr("stroke-width", 1)
+              .attr("x1", t(samples[s]))
+              .attr("x2", t(samples[s]))
+              .attr("y1", 10)
+              .attr("y2", 40)
+              .attr("opacity", 1.0);
+          }
+
+          this._elements.tooltip = treatment_plot.append("g")
+            .attr("style", "display: none;")
+            .node();
+          this._elements.treatment_plot = treatment_plot.node();
+
+          this._refresh()
+        },
+
+        _refresh: function() {
+          this.element.context.innerHTML = this._elements.treatment_plot.outerHTML
+        },
+
+        toggle_tx: function(eve) {
+          if (typeof eve.target.getAttribute("tx") === "string") {
+            let tx_line = eve.target,
+              tooltip = d3.select(this._elements.tooltip);
+            let {x, width} = tx_line.getBBox(),
+              tx_mid = x + (width / 2);
+            tooltip.attr("style", "display: block;")
+              .attr("transform", "translate(" + tx_mid.toString() + ",60)");
+
+            let border = tooltip.selectAll("path")
+              .data([null])
+              .join("path")
+                .attr("fill", "white")
+                .attr("stroke", "black");
+
+            tooltip.selectAll("text")
+              .data([null])
+              .join("text")
+              .attr("id", "treatment-text")
+              .attr("text-anchor", "middle")
+              .call(t => t
+                .selectAll("tspan")
+                .data([tx_line.getAttribute("tx")])
+                .join("tspan")
+                .attr("x", 0)
+                .attr("y", 0)
+                .text(d => d));
+
+            this._refresh();
+
+            let {width: w, height: h} = $("#treatment-text")[0].getBBox();
+
+            border.attr("d", "M" + (-w / 2 - 10).toString() + " " + (-h / 2 - 15).toString() + " H " +
+              (w / 2 + 10).toString() + " V " + (h / 2 + 5).toString() + " H " + (-w / 2 - 10).toString() + " Z");
+          } else {
+            this._elements.tooltip.setAttribute("style", "display: none;");
+          }
+
+          this._refresh();
+        }
+
+      });
+
+      let treatment_data = false;
+
+      if (treatment_data) {
+        $("#treatment-plot").treatment_plot(treatment_data);
+      }
+
+    });
+  </script>
+  <script>
+    $(function() {
+      $.widget("PhylogicNDT_report.mutation_visual", {
+        options: {
+          cluster_dict: {1: {ccf_hat: [0], ccf_high: [0], ccf_low: [0], color: "green", muts: {}, drivers: []}},
+          aliases: []
+        },
+
+        _elements: {
+          mutation_visual: undefined
+        },
+
+        _create: function() {
+          const cluster_dict = this.options.cluster_dict,
+            aliases = this.options.aliases;
+          let svg_visual = d3.select(document.createElement("svg"))
+            .attr("baseProfile", "full")
+            .attr("version", "1.1")
+            .attr("xmlns", "http://www.w3.org/2000/svg")
+            .attr("xmlns:ev", "http://www.w3.org/2001/xml-events")
+            .attr("xmlns:xlink", "http://www.w3.org/1999/xlink")
+            .attr("overflow", "auto"),
+            c_groups = [[], [], [], []],
+            group_names = ["UNIVERSAL MUTATIONS", "OTHER COMMON MUTATIONS", "OTHER CLONAL", "SUBCLONAL"],
+            group_min_lens = [200, 200, 150, 150];
+          for (let c in cluster_dict) {
+            let clonality = [];
+            for (let s in cluster_dict[c].ccf_hat) {
+              let cl = cluster_dict[c].ccf_hat[s];
+              if (cl > 0.9) {
+                clonality.push(1);
+              } else if (cl > 0.1) {
+                clonality.push(0.5);
+              } else {
+                clonality.push(0);
+              }
+            }
+            if (clonality.every(v => v === 1)) {
+              c_groups[0].push(c);
+            } else if (clonality.reduce((p, a) => p + a) > 1) {
+              c_groups[1].push(c);
+            } else if (clonality.some(v => v === 1)) {
+              c_groups[2].push(c);
+            } else {
+              c_groups[3].push(c);
+            }
+          }
+
+          for (let a in aliases) {
+            svg_visual.append("g")
+              .attr("transform", "translate(15," + (a * 12 + 133).toString() + ")")
+              .append("svg")
+                .attr("width", "100px")
+                .attr("height", "20px")
+                .attr("x", 10)
+                .attr("y", 10)
+                .attr("stroke-width", 1)
+                .attr("stroke", "black")
+                .append("text")
+                  .html(aliases[a])
+                  .attr("font-size", "9px")
+                  .attr("x", 10)
+                  .attr("y", 10)
+                  .attr("text-anchor", "start")
+                  .attr("textLength", 50)
+                  .attr("class", "samples");
+          }
+
+          let x_offset = 20,
+            y_offset = 30,
+            header_x_offset = 70;
+
+          for (let g in c_groups) {
+            if (c_groups[g].length) {
+              let g_len = 0;
+              for (let i in c_groups[g]) {
+                let c = c_groups[g][i],
+                  box_stroke = cluster_dict[c].color,
+                  drivers = cluster_dict[c].drivers,
+                  muts = cluster_dict[c].muts,
+                  sorted_muts = Object.keys(muts).sort(function(a, b) {
+                    if (drivers.includes(a) && drivers.includes(b)) {
+                      return 0
+                    }
+                    if (drivers.includes(a)) {
+                      return -1
+                    }
+                    if (drivers.includes(b)) {
+                      return 1
+                    }
+                    return 0
+                  }),
+                  cnvs = cluster_dict[c].cnvs,
+                  sorted_vars = [...sorted_muts, ...Object.keys(cnvs)];
+                g_len += sorted_vars.length * 12;
+                for (let ii in sorted_vars) {
+                  let mut = sorted_vars[ii],
+                    mut_group = svg_visual.append("g")
+                    .attr("class", "mut_group"),
+                    mut_suffix = mut.includes("_") ? mut.split("_")[1] : "p.A0A",
+                    text_color = mut.startsWith("loss") || mut.startsWith("gain") ?
+                      "black" : ((mut_suffix.length > 3 && mut_suffix[2] === mut_suffix[mut_suffix.length - 1]) ? "gray" : "black"),
+                    text_weight = drivers.includes(mut) ? "bold" : "normal";
+                  mut_group.append("g")
+                    .attr("transform", "rotate(-75," + (x_offset + 53).toString() + ",145) " +
+                      "translate(" + (x_offset + 53).toString() + ",145)")
+                    .append("svg")
+                      .attr("width", "100px")
+                      .attr("height", "20px")
+                      .attr("x", 10)
+                      .attr("y", 10)
+                      .append("text")
+                        .html(mut)
+                        .attr("font-size", "9px")
+                        .attr("font-family", "Arial")
+                        .attr("fill", text_color)
+                        .attr("x", 10)
+                        .attr("y", 10)
+                        .attr("text-anchor", "start")
+                        .attr("textLength", 70)
+                        .attr("font-weight", text_weight)
+                        .attr("class", "cluster_" + c.toString());
+                  for (let a in aliases) {
+                    let ccf_hat = cluster_dict[c].ccf_hat[a],
+                      ccf_1d = mut in muts ? muts[mut].ccf_hat[a] : cnvs[mut].ccf_hat[a],
+                      box_color = ccf_1d < 0.1 ? "white" : cluster_dict[c].color,
+                      box_size = ccf_hat * 9 + 1,
+                      a_box_stroke = ccf_hat > 0.9 ? "red" : box_stroke;
+                    mut_group.append("rect")
+                      .attr("x", x_offset + 75 - (box_size / 2.0))
+                      .attr("y", y_offset + 120 + (a * 12) - (box_size / 2.0))
+                      .attr("width", box_size.toString() + "px")
+                      .attr("height", box_size.toString() + "px")
+                      .attr("stroke-width", 1)
+                      .attr("stroke", a_box_stroke)
+                      .attr("fill", box_color)
+                      .attr("opacity", 0.8)
+                      .attr("class", "cluster_" + c.toString());
+                  }
+                  x_offset += 12;
+                }
+              }
+              svg_visual.append("g")
+                .attr("transform", "translate(" + (20 + header_x_offset).toString() + ",30)")
+                .append("svg")
+                  .attr("width", g_len)
+                  .attr("height", "20px")
+                  .attr("x", 10)
+                  .attr("y", 10)
+                  .attr("stroke-width", 1)
+                  .attr("stroke", "black")
+                  .append("text")
+                    .html(group_names[g])
+                    .attr("font-size", g_len > group_min_lens[g] ? "12px" : "8px")
+                    .attr("x", 10)
+                    .attr("y", 10)
+                    .attr("text-anchor", "start");
+              header_x_offset += g_len + 8;
+              x_offset += 10;
+            }
+          }
+          svg_visual
+            .attr("width", x_offset + 110)
+            .attr("height", y_offset + 160 + (aliases.length * 12));
+          this._elements.mutation_visual = svg_visual.node();
+
+          this._refresh();
+        },
+
+        _refresh: function() {
+          this.element.context.innerHTML = this._elements.mutation_visual.outerHTML;
+        },
+
+        download: function() {
+          let dl_link = "data:text/plain;charset=utf-8," + encodeURIComponent(this._elements.mutation_visual.outerHTML),
+            dl = document.createElement("a");
+          document.body.appendChild(dl);
+          dl.setAttribute("href", dl_link);
+          dl.setAttribute("download", "pt9" + ".clonality_chart.svg");
+          dl.click();
+        }
+      });
+
+      $("#mutation-visual").mutation_visual({"cluster_dict": {"1": {"ccf_hat": [0.94, 0.88, 0.92], "tumor_abundance": [0.96, 0.98, 1.0], "ccf_high": [1.0, 1.0, 1.0], "color": "rgb(39,140,24)", "drivers": [], "ccf_low": [0.87, 0.75, 0.83], "muts": {"ADAMTS16_None": {"ref_cnt": ["15", "24", "37"], "ccf_hat": [0.94, 0.88, 0.92], "alt_cnt": ["22", "22", "36"], "chrom": "5", "pos": "5303783"}, "SLA_None": {"ref_cnt": ["23", "16", "40"], "ccf_hat": [0.63, 0.83, 0.57], "alt_cnt": ["7", "13", "14"], "chrom": "8", "pos": "134060168"}, "GATS_None": {"ref_cnt": ["12", "8", "17"], "ccf_hat": [0.65, 0.84, 0.81], "alt_cnt": ["4", "9", "12"], "chrom": "7", "pos": "99799033"}}, "line_width": 2.0, "cnvs": {}}, "2": {"ccf_hat": [0.12, 0.19, 0.77], "tumor_abundance": [0.11, 0.18, 0.74], "ccf_high": [0.15, 0.22, 0.81], "color": "rgb(103,200,243)", "drivers": ["KRAS_None"], "ccf_low": [0.09, 0.16, 0.72], "muts": {"VSIG10_None": {"ref_cnt": ["42", "31", "40"], "ccf_hat": [0.12, 0.12, 0.8], "alt_cnt": ["1", "1", "25"], "chrom": "12", "pos": "118519975"}, "CCDC102B_None": {"ref_cnt": ["57", "54", "35"], "ccf_hat": [0.35, 0.37, 0.91], "alt_cnt": ["8", "11", "33"], "chrom": "18", "pos": "66504112"}, "SLC30A3_None": {"ref_cnt": ["66", "41", "67"], "ccf_hat": [0.11, 0.36, 0.64], "alt_cnt": ["2", "8", "28"], "chrom": "2", "pos": "27481696"}, "AGL_None": {"ref_cnt": ["76", "67", "65"], "ccf_hat": [0.13, 0.19, 0.81], "alt_cnt": ["3", "6", "40"], "chrom": "1", "pos": "100361859"}, "PNLIPRP3_None": {"ref_cnt": ["46", "56", "61"], "ccf_hat": [0.11, 0.16, 0.74], "alt_cnt": ["1", "4", "32"], "chrom": "10", "pos": "118231381"}, "CDK15_None": {"ref_cnt": ["83", "82", "77"], "ccf_hat": [0.09, 0.18, 0.78], "alt_cnt": ["2", "7", "44"], "chrom": "2", "pos": "202719622"}, "SMOC1_None": {"ref_cnt": ["8", "12", "14"], "ccf_hat": [0.43, 0.14, 0.8], "alt_cnt": ["1", "0", "10"], "chrom": "14", "pos": "70497098"}, "PCDHB12_None": {"ref_cnt": ["72", "61", "78"], "ccf_hat": [0.14, 0.18, 0.8], "alt_cnt": ["3", "5", "47"], "chrom": "5", "pos": "140590075"}, "KRT25_None": {"ref_cnt": ["45", "40", "36"], "ccf_hat": [0.26, 0.37, 0.87], "alt_cnt": ["4", "8", "28"], "chrom": "17", "pos": "38910718"}, "CPN2_None": {"ref_cnt": ["67", "47", "53"], "ccf_hat": [0.15, 0.23, 0.83], "alt_cnt": ["2", "3", "21"], "chrom": "3", "pos": "194062583"}, "RECQL5_None": {"ref_cnt": ["42", "29", "58"], "ccf_hat": [0.05, 0.39, 0.52], "alt_cnt": ["0", "6", "18"], "chrom": "17", "pos": "73625081"}, "KRAS_None": {"ref_cnt": ["54", "42", "52"], "ccf_hat": [0.14, 0.17, 0.64], "alt_cnt": ["2", "3", "22"], "chrom": "12", "pos": "25398281"}, "SLIT2_None": {"ref_cnt": ["30", "40", "37"], "ccf_hat": [0.16, 0.14, 0.73], "alt_cnt": ["1", "2", "19"], "chrom": "4", "pos": "20598209"}, "BTBD11_None": {"ref_cnt": ["16", "10", "19"], "ccf_hat": [0.28, 0.43, 0.69], "alt_cnt": ["1", "2", "9"], "chrom": "12", "pos": "108006595"}, "RIMS3_None": {"ref_cnt": ["26", "39", "25"], "ccf_hat": [0.26, 0.1, 0.88], "alt_cnt": ["2", "1", "22"], "chrom": "1", "pos": "41092401"}, "SULT1C2_None": {"ref_cnt": ["66", "53", "51"], "ccf_hat": [0.15, 0.11, 0.69], "alt_cnt": ["3", "2", "24"], "chrom": "2", "pos": "108921156"}}, "line_width": 7.0, "cnvs": {}}, "3": {"ccf_hat": [0.62, 0.46, 0.01], "tumor_abundance": [0.56, 0.45, 0.01], "ccf_high": [0.71, 0.53, 0.02], "color": "rgb(248,139,16)", "drivers": [], "ccf_low": [0.53, 0.39, 0.01], "muts": {"APBA1_None": {"ref_cnt": ["141", "140", "244"], "ccf_hat": [0.58, 0.43, 0.02], "alt_cnt": ["39", "37", "1"], "chrom": "9", "pos": "72082799"}, "DCHS2_None": {"ref_cnt": ["63", "69", "125"], "ccf_hat": [0.5, 0.4, 0.01], "alt_cnt": ["14", "16", "0"], "chrom": "4", "pos": "155219624"}, "SMEK1_None": {"ref_cnt": ["15", "13", "28"], "ccf_hat": [0.65, 0.59, 0.07], "alt_cnt": ["5", "5", "0"], "chrom": "14", "pos": "91975925"}, "OR6A2_None": {"ref_cnt": ["45", "43", "93"], "ccf_hat": [0.75, 0.47, 0.05], "alt_cnt": ["18", "12", "1"], "chrom": "11", "pos": "6816700"}, "AXL_None": {"ref_cnt": ["29", "16", "43"], "ccf_hat": [0.78, 0.78, 0.04], "alt_cnt": ["13", "11", "0"], "chrom": "19", "pos": "41754703"}}, "line_width": 3.0, "cnvs": {}}, "4": {"ccf_hat": [0.05, 0.07, 0.24], "tumor_abundance": [0.0, 0.08, 0.23], "ccf_high": [0.08, 0.1, 0.29], "color": "rgb(16,49,41)", "drivers": [], "ccf_low": [0.02, 0.04, 0.19], "muts": {"GPR126_None": {"ref_cnt": ["76", "90", "110"], "ccf_hat": [0.07, 0.04, 0.14], "alt_cnt": ["1", "1", "7"], "chrom": "6", "pos": "142736984"}, "TSR1_None": {"ref_cnt": ["52", "38", "50"], "ccf_hat": [0.04, 0.05, 0.15], "alt_cnt": ["0", "0", "3"], "chrom": "17", "pos": "2228651"}, "TPTE_None": {"ref_cnt": ["141", "136", "192"], "ccf_hat": [0.07, 0.11, 0.33], "alt_cnt": ["3", "7", "34"], "chrom": "21", "pos": "10916407"}}, "line_width": 2.0, "cnvs": {}}, "5": {"ccf_hat": [0.15, 0.13, 0.01], "tumor_abundance": [0.11, 0.1, 0.01], "ccf_high": [0.19, 0.16, 0.01], "color": "rgb(93,119,254)", "drivers": [], "ccf_low": [0.11, 0.09, 0.01], "muts": {"LRP5_None": {"ref_cnt": ["37", "36", "79"], "ccf_hat": [0.25, 0.1, 0.02], "alt_cnt": ["3", "1", "0"], "chrom": "11", "pos": "68192679"}, "OR10AG1_None": {"ref_cnt": ["43", "36", "60"], "ccf_hat": [0.22, 0.2, 0.03], "alt_cnt": ["3", "3", "0"], "chrom": "11", "pos": "55735582"}, "GAK_None": {"ref_cnt": ["28", "24", "37"], "ccf_hat": [0.25, 0.28, 0.05], "alt_cnt": ["2", "3", "0"], "chrom": "4", "pos": "887237"}, "GATAD2B_None": {"ref_cnt": ["96", "85", "149"], "ccf_hat": [0.25, 0.15, 0.01], "alt_cnt": ["9", "6", "0"], "chrom": "1", "pos": "153792153"}, "NDFIP1_None": {"ref_cnt": ["55", "64", "124"], "ccf_hat": [0.18, 0.12, 0.01], "alt_cnt": ["3", "3", "0"], "chrom": "5", "pos": "141517393"}, "PPWD1_None": {"ref_cnt": ["82", "50", "118"], "ccf_hat": [0.18, 0.11, 0.01], "alt_cnt": ["5", "2", "0"], "chrom": "5", "pos": "64872738"}, "APOBEC3A_None": {"ref_cnt": ["52", "40", "103"], "ccf_hat": [0.04, 0.22, 0.02], "alt_cnt": ["0", "4", "0"], "chrom": "22", "pos": "39355620"}, "EXOC1_None": {"ref_cnt": ["50", "38", "65"], "ccf_hat": [0.05, 0.19, 0.03], "alt_cnt": ["0", "3", "0"], "chrom": "4", "pos": "56734691"}, "TAOK2_None": {"ref_cnt": ["16", "21", "34"], "ccf_hat": [0.28, 0.31, 0.05], "alt_cnt": ["1", "3", "0"], "chrom": "16", "pos": "29994548"}, "GABPB1_None": {"ref_cnt": ["72", "65", "115"], "ccf_hat": [0.17, 0.03, 0.01], "alt_cnt": ["4", "0", "0"], "chrom": "15", "pos": "50595263"}, "GINS3_None": {"ref_cnt": ["10", "13", "20"], "ccf_hat": [0.38, 0.45, 0.09], "alt_cnt": ["1", "3", "0"], "chrom": "16", "pos": "58438639"}}, "line_width": 5.0, "cnvs": {}}}, "aliases": ["T0", "T1", "T2"]})
+    });
+  </script>
+  <script>
+    $(function() {
+      $.widget("PhylogicNDT_report.cluster_table", {
+
+        options: {
+          aliases: [],
+          cluster_dict: {1: {ccf_hat: [0], ccf_high: [0], ccf_low: [0], color: "green", muts: {}}},
+        },
+
+        _elements: {
+          cluster_table: undefined,
+          column_data: undefined,
+          table_data: undefined,
+          cluster_datatable: undefined
+        },
+
+        _create: function() {
+          let aliases = this.options.aliases,
+            cluster_dict = this.options.cluster_dict,
+            table_el = d3.select(document.createElement("table"))
+              .attr("id", "cluster_table")
+              .attr("class", "hover"),
+            col_width = Math.round(82 / (aliases.length + 1.3)),
+            cluster_col_width = 82 - (aliases.length * col_width),
+            columns = [{"data": "Cluster", "width": cluster_col_width + "%"},
+              {"data": "Chromosome", "width": "9%"},
+              {"data": "Position", "width": "9%"}
+            ],
+            col_list = ["Cluster", "Chromosome", "Position"];
+          for (let i in aliases) {
+            columns.push({"data": aliases[i] + " CCF", "width": col_width + "%"});
+            col_list.push(aliases[i] + " CCF");
+          }
+          table_el.append("thead")
+            .selectAll("th")
+            .data(col_list)
+            .join("th")
+            .text(d => d);
+          let cluster_data = [];
+          for (let c in cluster_dict) {
+            let cluster_dat = {"Cluster": c, "Chromosome": null, "Position": null};
+            for (let i in aliases) {
+              cluster_dat[aliases[i] + " CCF"] = cluster_dict[c].ccf_hat[i] + " (" + cluster_dict[c].ccf_low[i] + "-" + cluster_dict[c].ccf_high[i] + ")";
+            }
+            cluster_data.push(cluster_dat);
+          }
+          this._elements.cluster_table = table_el.node();
+          this._elements.column_data = columns;
+          this._elements.table_data = {"columns": columns,
+            "data": cluster_data,
+            "order": [[0, "asc"]],
+            "paging": false,
+            "bInfo": false,
+            "createdRow": function(row, data, dataIndex) {
+              $(row).css("color", cluster_dict[dataIndex + 1].color)
+                .css("cursor", "pointer")
+                .attr("id", "mutation_row_cluster " + (dataIndex + 1).toString())
+            }};
+
+          this._refresh();
+        },
+
+        _refresh: function() {
+          this.element.context.innerHTML = this._elements.cluster_table.outerHTML;
+          this._elements.cluster_datatable = $("#cluster_table").DataTable(this._elements.table_data);
+          $("#cluster_table tbody").on("click", "tr", this.toggle_mutations(this));
+          let search_input = $(".dataTables_filter input");
+          search_input.unbind().bind("keyup", function(e) {
+            if (search_input.val().length === 0) {
+              for (let c in this.options.cluster_dict) {
+                this.hide_mutations(c);
+              }
+            } else if (e.keyCode === 13) {
+              for (let c in this.options.cluster_dict) {
+                let cluster_table = this.show_mutations(c);
+                cluster_table.search(search_input.val()).draw();
+                if (cluster_table.page.info().recordsDisplay === 0) {
+                  this.hide_mutations(c);
+                }
+              }
+            }
+          }
+          .bind(this));
+        },
+
+        toggle_mutations: function(widg) {
+          return function() {
+            let row = widg._elements.cluster_datatable.row($(this));
+            if (row.data()) {
+              if (row.child.isShown()) {
+                row.child.hide();
+              } else {
+                let c = row.data().Cluster,
+                  cluster_muts = widg.options.cluster_dict[c].muts,
+                  cluster_cnvs = widg.options.cluster_dict[c].cnvs,
+                  drivers = widg.options.cluster_dict[c].drivers,
+                  color = widg.options.cluster_dict[c].color,
+                  aliases = widg.options.aliases,
+                  mut_data = [];
+                for (let mut in cluster_muts) {
+                  let mut_dat = {"is_driver": drivers.includes(mut) ? 0 : 1,
+                    "Cluster": mut,
+                    "Chromosome": cluster_muts[mut].chrom,
+                    "Position": cluster_muts[mut].pos
+                  };
+                  for (let i in aliases) {
+                    mut_dat[aliases[i] + " CCF"] = cluster_muts[mut].ccf_hat[i] +
+                      (" (" + cluster_muts[mut].alt_cnt[i] + ":" + cluster_muts[mut].ref_cnt[i] + ")");
+                  }
+                  mut_data.push(mut_dat);
+                }
+                for (let cnv in cluster_cnvs) {
+                  let cnv_dat = {"is_driver": 1,
+                    "Cluster": cnv,
+                    "Chromosome": cluster_cnvs[cnv].chrom,
+                    "Position": null
+                  };
+                  for (let i in aliases) {
+                    cnv_dat[aliases[i] + " CCF"] = cluster_cnvs[cnv].ccf_hat[i];
+                  }
+                  mut_data.push(cnv_dat);
+                }
+                row.child("<table id=\"cluster_" + row.data().Cluster + "_table\" class=\"hover\"></table>").show();
+                $("#cluster_" + row.data().Cluster + "_table").DataTable({
+                  "columns": [{"data": "is_driver", "visible": false}].concat(widg._elements.column_data),
+                  "data": mut_data,
+                  "autoWidth": false,
+                  "order": [[0, "asc"]],
+                  "paging": false,
+                  "scrollY": 320,
+                  "scrollCollapse": true,
+                  "createdRow": function(row, data) {
+                    $(row).css("color", color);
+                    if (data.is_driver === 0) {
+                      $(row).css("font-weight", "bold");
+                    }
+                  }
+                });
+              }
+            }
+          }
+        },
+
+        show_mutations: function(cluster) {
+          let row = this._elements.cluster_datatable.row(cluster - 1),
+            cluster_table;
+          if (~row.child.isShown()) {
+            let cluster_muts = this.options.cluster_dict[cluster].muts,
+              drivers = this.options.cluster_dict[cluster].drivers,
+              color = this.options.cluster_dict[cluster].color,
+              aliases = this.options.aliases,
+              mut_data = [];
+            for (let mut in cluster_muts) {
+              let mut_dat = {"is_driver": drivers.includes(mut) ? 0 : 1,
+                  "Cluster": mut,
+                  "Chromosome": cluster_muts[mut].chrom,
+                  "Position": cluster_muts[mut].pos
+                },
+                is_cnv = mut.startsWith("gain") || mut.startsWith("loss") || mut.startsWith("homdel") || mut === "WGD";
+              for (let i in aliases) {
+                mut_dat[aliases[i] + " CCF"] = cluster_muts[mut].ccf_hat[i] +
+                  (is_cnv ? "" : " (" + cluster_muts[mut].alt_cnt[i] + ":" + cluster_muts[mut].ref_cnt[i] + ")");
+              }
+              mut_data.push(mut_dat);
+            }
+            row.child("<table id=\"cluster_" + cluster.toString() + "_table\" class=\"hover\"></table>").show();
+            cluster_table = $("#cluster_" + cluster.toString() + "_table").DataTable({
+              "columns": [{"data": "is_driver", "visible": false}].concat(this._elements.column_data),
+              "data": mut_data,
+              "autoWidth": false,
+              "order": [[0, "asc"]],
+              "paging": false,
+              "scrollY": 320,
+              "scrollCollapse": true,
+              "createdRow": function(row, data) {
+                $(row).css("color", color);
+                if (data.is_driver === 0) {
+                  $(row).css("font-weight", "bold");
+                }
+              }
+            });
+          } else {
+            cluster_table = row.child.DataTable();
+          }
+          return cluster_table;
+        },
+
+        hide_mutations: function(cluster) {
+          this._elements.cluster_datatable.row(cluster - 1).child.hide();
+        },
+
+        download_as_tsv: function() {
+          let aliases = this.options.aliases,
+            cluster_dict = this.options.cluster_dict,
+            columns = ["Cluster", "Mutation", "Driver", "Chromosome", "Position", ...aliases.map(d => d + " CCF")],
+            dl_link = "data:text/plain;charset=utf-8,";
+          
+          let is_driver = function(mut, drivers) {
+            if (mut.startsWith("gain") || mut.startsWith("loss") || mut.startsWith("homdel") || mut === "WGD") {
+              return null
+            }
+            return drivers.includes(mut)
+          };
+
+          dl_link += columns.join("\t") + "\n";
+          for (let c in cluster_dict) {
+            let cluster_row = [c, null, null, null, null, ...aliases.map(
+              (_, i) => cluster_dict[c].ccf_hat[i]
+                + " (" + cluster_dict[c].ccf_low[i]
+                + "-" + cluster_dict[c].ccf_high[i] + ")")];
+            dl_link += cluster_row.join("\t") + "\n";
+            let cluster_muts = cluster_dict[c].muts,
+              drivers = cluster_dict[c].drivers,
+              mut_rows = Object.keys(cluster_muts).map(
+                d => [c, d, is_driver(d, drivers), cluster_muts[d].chrom, cluster_muts[d].pos,
+                  ...aliases.map((_, i) => cluster_muts[d].ccf_hat[i] + " ("
+                    + cluster_muts[d].alt_cnt[i] + ":"
+                    + cluster_muts[d].ref_cnt[i] + ")"
+                  )
+                ].join("\t")
+              );
+            dl_link += mut_rows.join("\n") + "\n"
+          }
+
+          let dl = document.createElement("a");
+          document.body.appendChild(dl);
+          dl.setAttribute("href", dl_link);
+          dl.setAttribute("download", "pt9" + ".cluster_table.tsv");
+          dl.click();
+
+        }
+
+      });
+
+      $("#cluster-table").cluster_table({"cluster_dict": {"1": {"ccf_hat": [0.94, 0.88, 0.92], "tumor_abundance": [0.96, 0.98, 1.0], "ccf_high": [1.0, 1.0, 1.0], "color": "rgb(39,140,24)", "drivers": [], "ccf_low": [0.87, 0.75, 0.83], "muts": {"ADAMTS16_None": {"ref_cnt": ["15", "24", "37"], "ccf_hat": [0.94, 0.88, 0.92], "alt_cnt": ["22", "22", "36"], "chrom": "5", "pos": "5303783"}, "SLA_None": {"ref_cnt": ["23", "16", "40"], "ccf_hat": [0.63, 0.83, 0.57], "alt_cnt": ["7", "13", "14"], "chrom": "8", "pos": "134060168"}, "GATS_None": {"ref_cnt": ["12", "8", "17"], "ccf_hat": [0.65, 0.84, 0.81], "alt_cnt": ["4", "9", "12"], "chrom": "7", "pos": "99799033"}}, "line_width": 2.0, "cnvs": {}}, "2": {"ccf_hat": [0.12, 0.19, 0.77], "tumor_abundance": [0.11, 0.18, 0.74], "ccf_high": [0.15, 0.22, 0.81], "color": "rgb(103,200,243)", "drivers": ["KRAS_None"], "ccf_low": [0.09, 0.16, 0.72], "muts": {"VSIG10_None": {"ref_cnt": ["42", "31", "40"], "ccf_hat": [0.12, 0.12, 0.8], "alt_cnt": ["1", "1", "25"], "chrom": "12", "pos": "118519975"}, "CCDC102B_None": {"ref_cnt": ["57", "54", "35"], "ccf_hat": [0.35, 0.37, 0.91], "alt_cnt": ["8", "11", "33"], "chrom": "18", "pos": "66504112"}, "SLC30A3_None": {"ref_cnt": ["66", "41", "67"], "ccf_hat": [0.11, 0.36, 0.64], "alt_cnt": ["2", "8", "28"], "chrom": "2", "pos": "27481696"}, "AGL_None": {"ref_cnt": ["76", "67", "65"], "ccf_hat": [0.13, 0.19, 0.81], "alt_cnt": ["3", "6", "40"], "chrom": "1", "pos": "100361859"}, "PNLIPRP3_None": {"ref_cnt": ["46", "56", "61"], "ccf_hat": [0.11, 0.16, 0.74], "alt_cnt": ["1", "4", "32"], "chrom": "10", "pos": "118231381"}, "CDK15_None": {"ref_cnt": ["83", "82", "77"], "ccf_hat": [0.09, 0.18, 0.78], "alt_cnt": ["2", "7", "44"], "chrom": "2", "pos": "202719622"}, "SMOC1_None": {"ref_cnt": ["8", "12", "14"], "ccf_hat": [0.43, 0.14, 0.8], "alt_cnt": ["1", "0", "10"], "chrom": "14", "pos": "70497098"}, "PCDHB12_None": {"ref_cnt": ["72", "61", "78"], "ccf_hat": [0.14, 0.18, 0.8], "alt_cnt": ["3", "5", "47"], "chrom": "5", "pos": "140590075"}, "KRT25_None": {"ref_cnt": ["45", "40", "36"], "ccf_hat": [0.26, 0.37, 0.87], "alt_cnt": ["4", "8", "28"], "chrom": "17", "pos": "38910718"}, "CPN2_None": {"ref_cnt": ["67", "47", "53"], "ccf_hat": [0.15, 0.23, 0.83], "alt_cnt": ["2", "3", "21"], "chrom": "3", "pos": "194062583"}, "RECQL5_None": {"ref_cnt": ["42", "29", "58"], "ccf_hat": [0.05, 0.39, 0.52], "alt_cnt": ["0", "6", "18"], "chrom": "17", "pos": "73625081"}, "KRAS_None": {"ref_cnt": ["54", "42", "52"], "ccf_hat": [0.14, 0.17, 0.64], "alt_cnt": ["2", "3", "22"], "chrom": "12", "pos": "25398281"}, "SLIT2_None": {"ref_cnt": ["30", "40", "37"], "ccf_hat": [0.16, 0.14, 0.73], "alt_cnt": ["1", "2", "19"], "chrom": "4", "pos": "20598209"}, "BTBD11_None": {"ref_cnt": ["16", "10", "19"], "ccf_hat": [0.28, 0.43, 0.69], "alt_cnt": ["1", "2", "9"], "chrom": "12", "pos": "108006595"}, "RIMS3_None": {"ref_cnt": ["26", "39", "25"], "ccf_hat": [0.26, 0.1, 0.88], "alt_cnt": ["2", "1", "22"], "chrom": "1", "pos": "41092401"}, "SULT1C2_None": {"ref_cnt": ["66", "53", "51"], "ccf_hat": [0.15, 0.11, 0.69], "alt_cnt": ["3", "2", "24"], "chrom": "2", "pos": "108921156"}}, "line_width": 7.0, "cnvs": {}}, "3": {"ccf_hat": [0.62, 0.46, 0.01], "tumor_abundance": [0.56, 0.45, 0.01], "ccf_high": [0.71, 0.53, 0.02], "color": "rgb(248,139,16)", "drivers": [], "ccf_low": [0.53, 0.39, 0.01], "muts": {"APBA1_None": {"ref_cnt": ["141", "140", "244"], "ccf_hat": [0.58, 0.43, 0.02], "alt_cnt": ["39", "37", "1"], "chrom": "9", "pos": "72082799"}, "DCHS2_None": {"ref_cnt": ["63", "69", "125"], "ccf_hat": [0.5, 0.4, 0.01], "alt_cnt": ["14", "16", "0"], "chrom": "4", "pos": "155219624"}, "SMEK1_None": {"ref_cnt": ["15", "13", "28"], "ccf_hat": [0.65, 0.59, 0.07], "alt_cnt": ["5", "5", "0"], "chrom": "14", "pos": "91975925"}, "OR6A2_None": {"ref_cnt": ["45", "43", "93"], "ccf_hat": [0.75, 0.47, 0.05], "alt_cnt": ["18", "12", "1"], "chrom": "11", "pos": "6816700"}, "AXL_None": {"ref_cnt": ["29", "16", "43"], "ccf_hat": [0.78, 0.78, 0.04], "alt_cnt": ["13", "11", "0"], "chrom": "19", "pos": "41754703"}}, "line_width": 3.0, "cnvs": {}}, "4": {"ccf_hat": [0.05, 0.07, 0.24], "tumor_abundance": [0.0, 0.08, 0.23], "ccf_high": [0.08, 0.1, 0.29], "color": "rgb(16,49,41)", "drivers": [], "ccf_low": [0.02, 0.04, 0.19], "muts": {"GPR126_None": {"ref_cnt": ["76", "90", "110"], "ccf_hat": [0.07, 0.04, 0.14], "alt_cnt": ["1", "1", "7"], "chrom": "6", "pos": "142736984"}, "TSR1_None": {"ref_cnt": ["52", "38", "50"], "ccf_hat": [0.04, 0.05, 0.15], "alt_cnt": ["0", "0", "3"], "chrom": "17", "pos": "2228651"}, "TPTE_None": {"ref_cnt": ["141", "136", "192"], "ccf_hat": [0.07, 0.11, 0.33], "alt_cnt": ["3", "7", "34"], "chrom": "21", "pos": "10916407"}}, "line_width": 2.0, "cnvs": {}}, "5": {"ccf_hat": [0.15, 0.13, 0.01], "tumor_abundance": [0.11, 0.1, 0.01], "ccf_high": [0.19, 0.16, 0.01], "color": "rgb(93,119,254)", "drivers": [], "ccf_low": [0.11, 0.09, 0.01], "muts": {"LRP5_None": {"ref_cnt": ["37", "36", "79"], "ccf_hat": [0.25, 0.1, 0.02], "alt_cnt": ["3", "1", "0"], "chrom": "11", "pos": "68192679"}, "OR10AG1_None": {"ref_cnt": ["43", "36", "60"], "ccf_hat": [0.22, 0.2, 0.03], "alt_cnt": ["3", "3", "0"], "chrom": "11", "pos": "55735582"}, "GAK_None": {"ref_cnt": ["28", "24", "37"], "ccf_hat": [0.25, 0.28, 0.05], "alt_cnt": ["2", "3", "0"], "chrom": "4", "pos": "887237"}, "GATAD2B_None": {"ref_cnt": ["96", "85", "149"], "ccf_hat": [0.25, 0.15, 0.01], "alt_cnt": ["9", "6", "0"], "chrom": "1", "pos": "153792153"}, "NDFIP1_None": {"ref_cnt": ["55", "64", "124"], "ccf_hat": [0.18, 0.12, 0.01], "alt_cnt": ["3", "3", "0"], "chrom": "5", "pos": "141517393"}, "PPWD1_None": {"ref_cnt": ["82", "50", "118"], "ccf_hat": [0.18, 0.11, 0.01], "alt_cnt": ["5", "2", "0"], "chrom": "5", "pos": "64872738"}, "APOBEC3A_None": {"ref_cnt": ["52", "40", "103"], "ccf_hat": [0.04, 0.22, 0.02], "alt_cnt": ["0", "4", "0"], "chrom": "22", "pos": "39355620"}, "EXOC1_None": {"ref_cnt": ["50", "38", "65"], "ccf_hat": [0.05, 0.19, 0.03], "alt_cnt": ["0", "3", "0"], "chrom": "4", "pos": "56734691"}, "TAOK2_None": {"ref_cnt": ["16", "21", "34"], "ccf_hat": [0.28, 0.31, 0.05], "alt_cnt": ["1", "3", "0"], "chrom": "16", "pos": "29994548"}, "GABPB1_None": {"ref_cnt": ["72", "65", "115"], "ccf_hat": [0.17, 0.03, 0.01], "alt_cnt": ["4", "0", "0"], "chrom": "15", "pos": "50595263"}, "GINS3_None": {"ref_cnt": ["10", "13", "20"], "ccf_hat": [0.38, 0.45, 0.09], "alt_cnt": ["1", "3", "0"], "chrom": "16", "pos": "58438639"}}, "line_width": 5.0, "cnvs": {}}}, "aliases": ["T0", "T1", "T2"]})
+    });
+  </script>
+  <script>
+    $(function() {
+      $.widget("PhylogicNDT_report.mutation_plot", {
+        options: {
+          xlabels: [],
+          cluster_dict: {1: {ccf_hat: [0], ccf_high: [0], ccf_low: [0], line_width: 0, color: "green", drivers: []}},
+          width: 500,
+          height: 400,
+          margins: {top: 20, right: 30, bottom: 35, left: 40}
+        },
+
+        _elements: {
+          mutation_plot: undefined
+        },
+
+        _create: function() {
+          const xlabels = this.options.xlabels,
+            cluster_dict = this.options.cluster_dict,
+            width = this.options.width,
+            height = this.options.height,
+            margins = this.options.margins;
+
+          if (xlabels.length > 1) {
+            let x = d3.scaleLinear()
+              .domain([0, xlabels.length - 1])
+              .range([margins.left, width - margins.right]);
+
+            let y = d3.scaleLinear()
+              .domain([0, 1])
+              .range([height - margins.bottom, margins.top]);
+
+            let xAxis = g => g
+              .attr("transform", "translate(0 " + (height - margins.bottom).toString() + ")")
+              .call(d3.axisBottom(x).tickValues([...Array(xlabels.length).keys()]).tickFormat(d => xlabels[d]));
+
+            let yAxis = g => g
+              .attr("transform", "translate(" + margins.left.toString() + " 0)")
+              .call(d3.axisLeft(y));
+
+            let line = d3.line()
+              .x(d => x(d.x))
+              .y(d => y(d.y));
+
+            let mutation_plot = d3.select(document.createElement("svg"))
+              .attr("baseProfile", "full")
+              .attr("viewBox", "0 0 " + width + " " + height)
+              .style("max-width", "500px")
+              .style("min-width", "300px")
+              .attr("version", "1.1")
+              .attr("xmlns", "http://www.w3.org/2000/svg")
+              .attr("xmlns:ev", "http://www.w3.org/2001/xml-events")
+              .attr("xmlns:xlink", "http://www.w3.org/1999/xlink");
+            mutation_plot.append("g")
+              .call(xAxis);
+            mutation_plot.append("g")
+              .call(yAxis);
+            mutation_plot.append("text")
+              .attr("x", (width + margins.left - margins.right) / 2)
+              .attr("y", height - 5)
+              .style("text-anchor", "middle")
+              .attr("font-size", "10px")
+              .text("Samples");
+            mutation_plot.append("text")
+              .attr("transform", "rotate(-90 10 " + ((height + margins.top - margins.bottom) / 2).toString() + ")")
+              .attr("x", 10)
+              .attr("y", (height + margins.top - margins.bottom) / 2)
+              .style("text-anchor", "middle")
+              .attr("font-size", "10px")
+              .text("CCF(x)");
+            mutation_plot.append("text")
+              .attr("x", width / 2)
+              .attr("y", margins.top / 2)
+              .attr("text-anchor", "middle")
+              .style("font-size", "14px")
+              .style("text-decoration", "underline")
+              .text("Mutation plot");
+
+            for (let cluster in cluster_dict) {
+              let muts = cluster_dict[cluster].muts,
+                color = cluster_dict[cluster].color;
+              for (let mut in muts) {
+                let ccf_hat = muts[mut].ccf_hat,
+                  mutation_data = [];
+                for (let sample in ccf_hat) {
+                  mutation_data.push({
+                    x: sample,
+                    y: ccf_hat[sample]
+                  });
+                }
+                mutation_plot.append("path")
+                  .datum(mutation_data)
+                  .attr("fill", "none")
+                  .attr("stroke", color)
+                  .attr("stroke-width", 3)
+                  .attr("opacity", 0.3)
+                  .attr("d", line);
+              }
+            }
+
+            this._elements.mutation_plot = mutation_plot.node();
+          } else {
+            let max_bin = 0,
+              n_bins;
+            for (let c in cluster_dict) {
+              for (let mut in cluster_dict[c].muts) {
+                max_bin = Math.max(max_bin, ...cluster_dict[c].muts[mut].ccf_dist);
+                n_bins = cluster_dict[c].muts[mut].ccf_dist.length
+              }
+            }
+            let x = d3.scaleLinear()
+              .domain([0, 1])
+              .range([margins.left, width - margins.right]);
+
+            let y = d3.scaleLinear()
+              .domain([0, max_bin]).nice()
+              .range([height - margins.bottom, margins.top]);
+
+            let xAxis = g => g
+              .attr("transform", "translate(0 " + (height - margins.bottom).toString() + ")")
+              .call(d3.axisBottom(x));
+
+            let yAxis = g => g
+              .attr("transform", "translate(" + margins.left.toString() + " 0)")
+              .call(d3.axisLeft(y));
+
+            let plot_1d = d3.select(document.createElement("svg"))
+              .attr("baseProfile", "full")
+              .attr("viewBox", "0 0 " + width + " " + height)
+              .style("max-width", "500px")
+              .style("min-width", "300px")
+              .attr("version", "1.1")
+              .attr("xmlns", "http://www.w3.org/2000/svg")
+              .attr("xmlns:ev", "http://www.w3.org/2001/xml-events")
+              .attr("xmlns:xlink", "http://www.w3.org/1999/xlink");
+            plot_1d.append("g")
+              .call(xAxis);
+            plot_1d.append("g")
+              .call(yAxis);
+            plot_1d.append("text")
+              .attr("x", (width + margins.left - margins.right) / 2)
+              .attr("y", height - 5)
+              .style("text-anchor", "middle")
+              .attr("font-size", "10px")
+              .text("CCF(x)");
+            plot_1d.append("text")
+              .attr("transform", "rotate(-90 10 " + ((height + margins.top - margins.bottom) / 2).toString() + ")")
+              .attr("x", 10)
+              .attr("y", (height + margins.top - margins.bottom) / 2)
+              .style("text-anchor", "middle")
+              .attr("font-size", "10px")
+              .text("Probability density");
+
+            let zero_str = Array(n_bins).fill(0).reduce(
+              (a, c, i) => a + " " + x((n_bins - i - 1) / (n_bins - 1)).toString() + "," + y(0).toString(), " "
+            );
+
+            for (let c in cluster_dict) {
+              plot_1d.append("g")
+                .selectAll("polygon")
+                .data(Object.keys(cluster_dict[c].muts))
+                .join("polygon")
+                .attr("fill", cluster_dict[c].color)
+                .attr("opacity", 0.05)
+                .attr("stroke", "none")
+                .attr("points", d =>
+                  cluster_dict[c].muts[d].ccf_dist.reduce(
+                    (a, c, i) => a + " " + x(i / (n_bins - 1)).toString() + "," + y(c).toString(), ""
+                  ) + zero_str
+                );
+            }
+
+            plot_1d.append("text")
+              .attr("x", width / 2)
+              .attr("y", margins.top / 2)
+              .attr("text-anchor", "middle")
+              .style("font-size", "14px")
+              .style("text-decoration", "underline")
+              .text("Mutation plot");
+
+            this._elements.mutation_plot = plot_1d.node()
+          }
+
+          this._refresh();
+
+        },
+
+        _refresh: function() {
+          this.element.context.innerHTML = this._elements.mutation_plot.outerHTML;
+        },
+
+        download: function() {
+          let dl_link = "data:text/plain;charset=utf-8," + encodeURIComponent(this._elements.mutation_plot.outerHTML),
+            dl = document.createElement("a");
+          document.body.appendChild(dl);
+          dl.setAttribute("href", dl_link);
+          dl.setAttribute("download", "pt9" + ".mutation_plot.svg");
+          dl.click();
+        },
+
+        _destroy: function() {
+          this.element.context.innerHTML = ""
+        }
+      });
+
+      $("#mutation-plot").mutation_plot({"cluster_dict": {"1": {"ccf_hat": [0.94, 0.88, 0.92], "tumor_abundance": [0.96, 0.98, 1.0], "ccf_high": [1.0, 1.0, 1.0], "color": "rgb(39,140,24)", "drivers": [], "ccf_low": [0.87, 0.75, 0.83], "muts": {"ADAMTS16_None": {"ref_cnt": ["15", "24", "37"], "ccf_hat": [0.94, 0.88, 0.92], "alt_cnt": ["22", "22", "36"], "chrom": "5", "pos": "5303783"}, "SLA_None": {"ref_cnt": ["23", "16", "40"], "ccf_hat": [0.63, 0.83, 0.57], "alt_cnt": ["7", "13", "14"], "chrom": "8", "pos": "134060168"}, "GATS_None": {"ref_cnt": ["12", "8", "17"], "ccf_hat": [0.65, 0.84, 0.81], "alt_cnt": ["4", "9", "12"], "chrom": "7", "pos": "99799033"}}, "line_width": 2.0, "cnvs": {}}, "2": {"ccf_hat": [0.12, 0.19, 0.77], "tumor_abundance": [0.11, 0.18, 0.74], "ccf_high": [0.15, 0.22, 0.81], "color": "rgb(103,200,243)", "drivers": ["KRAS_None"], "ccf_low": [0.09, 0.16, 0.72], "muts": {"VSIG10_None": {"ref_cnt": ["42", "31", "40"], "ccf_hat": [0.12, 0.12, 0.8], "alt_cnt": ["1", "1", "25"], "chrom": "12", "pos": "118519975"}, "CCDC102B_None": {"ref_cnt": ["57", "54", "35"], "ccf_hat": [0.35, 0.37, 0.91], "alt_cnt": ["8", "11", "33"], "chrom": "18", "pos": "66504112"}, "SLC30A3_None": {"ref_cnt": ["66", "41", "67"], "ccf_hat": [0.11, 0.36, 0.64], "alt_cnt": ["2", "8", "28"], "chrom": "2", "pos": "27481696"}, "AGL_None": {"ref_cnt": ["76", "67", "65"], "ccf_hat": [0.13, 0.19, 0.81], "alt_cnt": ["3", "6", "40"], "chrom": "1", "pos": "100361859"}, "PNLIPRP3_None": {"ref_cnt": ["46", "56", "61"], "ccf_hat": [0.11, 0.16, 0.74], "alt_cnt": ["1", "4", "32"], "chrom": "10", "pos": "118231381"}, "CDK15_None": {"ref_cnt": ["83", "82", "77"], "ccf_hat": [0.09, 0.18, 0.78], "alt_cnt": ["2", "7", "44"], "chrom": "2", "pos": "202719622"}, "SMOC1_None": {"ref_cnt": ["8", "12", "14"], "ccf_hat": [0.43, 0.14, 0.8], "alt_cnt": ["1", "0", "10"], "chrom": "14", "pos": "70497098"}, "PCDHB12_None": {"ref_cnt": ["72", "61", "78"], "ccf_hat": [0.14, 0.18, 0.8], "alt_cnt": ["3", "5", "47"], "chrom": "5", "pos": "140590075"}, "KRT25_None": {"ref_cnt": ["45", "40", "36"], "ccf_hat": [0.26, 0.37, 0.87], "alt_cnt": ["4", "8", "28"], "chrom": "17", "pos": "38910718"}, "CPN2_None": {"ref_cnt": ["67", "47", "53"], "ccf_hat": [0.15, 0.23, 0.83], "alt_cnt": ["2", "3", "21"], "chrom": "3", "pos": "194062583"}, "RECQL5_None": {"ref_cnt": ["42", "29", "58"], "ccf_hat": [0.05, 0.39, 0.52], "alt_cnt": ["0", "6", "18"], "chrom": "17", "pos": "73625081"}, "KRAS_None": {"ref_cnt": ["54", "42", "52"], "ccf_hat": [0.14, 0.17, 0.64], "alt_cnt": ["2", "3", "22"], "chrom": "12", "pos": "25398281"}, "SLIT2_None": {"ref_cnt": ["30", "40", "37"], "ccf_hat": [0.16, 0.14, 0.73], "alt_cnt": ["1", "2", "19"], "chrom": "4", "pos": "20598209"}, "BTBD11_None": {"ref_cnt": ["16", "10", "19"], "ccf_hat": [0.28, 0.43, 0.69], "alt_cnt": ["1", "2", "9"], "chrom": "12", "pos": "108006595"}, "RIMS3_None": {"ref_cnt": ["26", "39", "25"], "ccf_hat": [0.26, 0.1, 0.88], "alt_cnt": ["2", "1", "22"], "chrom": "1", "pos": "41092401"}, "SULT1C2_None": {"ref_cnt": ["66", "53", "51"], "ccf_hat": [0.15, 0.11, 0.69], "alt_cnt": ["3", "2", "24"], "chrom": "2", "pos": "108921156"}}, "line_width": 7.0, "cnvs": {}}, "3": {"ccf_hat": [0.62, 0.46, 0.01], "tumor_abundance": [0.56, 0.45, 0.01], "ccf_high": [0.71, 0.53, 0.02], "color": "rgb(248,139,16)", "drivers": [], "ccf_low": [0.53, 0.39, 0.01], "muts": {"APBA1_None": {"ref_cnt": ["141", "140", "244"], "ccf_hat": [0.58, 0.43, 0.02], "alt_cnt": ["39", "37", "1"], "chrom": "9", "pos": "72082799"}, "DCHS2_None": {"ref_cnt": ["63", "69", "125"], "ccf_hat": [0.5, 0.4, 0.01], "alt_cnt": ["14", "16", "0"], "chrom": "4", "pos": "155219624"}, "SMEK1_None": {"ref_cnt": ["15", "13", "28"], "ccf_hat": [0.65, 0.59, 0.07], "alt_cnt": ["5", "5", "0"], "chrom": "14", "pos": "91975925"}, "OR6A2_None": {"ref_cnt": ["45", "43", "93"], "ccf_hat": [0.75, 0.47, 0.05], "alt_cnt": ["18", "12", "1"], "chrom": "11", "pos": "6816700"}, "AXL_None": {"ref_cnt": ["29", "16", "43"], "ccf_hat": [0.78, 0.78, 0.04], "alt_cnt": ["13", "11", "0"], "chrom": "19", "pos": "41754703"}}, "line_width": 3.0, "cnvs": {}}, "4": {"ccf_hat": [0.05, 0.07, 0.24], "tumor_abundance": [0.0, 0.08, 0.23], "ccf_high": [0.08, 0.1, 0.29], "color": "rgb(16,49,41)", "drivers": [], "ccf_low": [0.02, 0.04, 0.19], "muts": {"GPR126_None": {"ref_cnt": ["76", "90", "110"], "ccf_hat": [0.07, 0.04, 0.14], "alt_cnt": ["1", "1", "7"], "chrom": "6", "pos": "142736984"}, "TSR1_None": {"ref_cnt": ["52", "38", "50"], "ccf_hat": [0.04, 0.05, 0.15], "alt_cnt": ["0", "0", "3"], "chrom": "17", "pos": "2228651"}, "TPTE_None": {"ref_cnt": ["141", "136", "192"], "ccf_hat": [0.07, 0.11, 0.33], "alt_cnt": ["3", "7", "34"], "chrom": "21", "pos": "10916407"}}, "line_width": 2.0, "cnvs": {}}, "5": {"ccf_hat": [0.15, 0.13, 0.01], "tumor_abundance": [0.11, 0.1, 0.01], "ccf_high": [0.19, 0.16, 0.01], "color": "rgb(93,119,254)", "drivers": [], "ccf_low": [0.11, 0.09, 0.01], "muts": {"LRP5_None": {"ref_cnt": ["37", "36", "79"], "ccf_hat": [0.25, 0.1, 0.02], "alt_cnt": ["3", "1", "0"], "chrom": "11", "pos": "68192679"}, "OR10AG1_None": {"ref_cnt": ["43", "36", "60"], "ccf_hat": [0.22, 0.2, 0.03], "alt_cnt": ["3", "3", "0"], "chrom": "11", "pos": "55735582"}, "GAK_None": {"ref_cnt": ["28", "24", "37"], "ccf_hat": [0.25, 0.28, 0.05], "alt_cnt": ["2", "3", "0"], "chrom": "4", "pos": "887237"}, "GATAD2B_None": {"ref_cnt": ["96", "85", "149"], "ccf_hat": [0.25, 0.15, 0.01], "alt_cnt": ["9", "6", "0"], "chrom": "1", "pos": "153792153"}, "NDFIP1_None": {"ref_cnt": ["55", "64", "124"], "ccf_hat": [0.18, 0.12, 0.01], "alt_cnt": ["3", "3", "0"], "chrom": "5", "pos": "141517393"}, "PPWD1_None": {"ref_cnt": ["82", "50", "118"], "ccf_hat": [0.18, 0.11, 0.01], "alt_cnt": ["5", "2", "0"], "chrom": "5", "pos": "64872738"}, "APOBEC3A_None": {"ref_cnt": ["52", "40", "103"], "ccf_hat": [0.04, 0.22, 0.02], "alt_cnt": ["0", "4", "0"], "chrom": "22", "pos": "39355620"}, "EXOC1_None": {"ref_cnt": ["50", "38", "65"], "ccf_hat": [0.05, 0.19, 0.03], "alt_cnt": ["0", "3", "0"], "chrom": "4", "pos": "56734691"}, "TAOK2_None": {"ref_cnt": ["16", "21", "34"], "ccf_hat": [0.28, 0.31, 0.05], "alt_cnt": ["1", "3", "0"], "chrom": "16", "pos": "29994548"}, "GABPB1_None": {"ref_cnt": ["72", "65", "115"], "ccf_hat": [0.17, 0.03, 0.01], "alt_cnt": ["4", "0", "0"], "chrom": "15", "pos": "50595263"}, "GINS3_None": {"ref_cnt": ["10", "13", "20"], "ccf_hat": [0.38, 0.45, 0.09], "alt_cnt": ["1", "3", "0"], "chrom": "16", "pos": "58438639"}}, "line_width": 5.0, "cnvs": {}}}, "xlabels": ["T0", "T1", "T2"]})
+    })
+  </script>
+  <script>
+    $(function() {
+      $.widget("PhylogicNDT_report.fish_plot", {
+        options: {
+          xlabels: [],
+          time_points: [],
+          tumor_sizes: [],
+          cluster_dict: {1: {ccf_hat: [0], ccf_high: [0], ccf_low: [0], line_width: 0, color: "green", drivers: []}},
+          child_dict: {},
+          timed: true,
+          width: 500,
+          height: 400,
+          margins: {top: 20, right: 30, bottom: 35, left: 40}
+        },
+
+        _elements: {
+          fish_plot: undefined
+        },
+
+        _create: function() {
+          let xlabels = this.options.xlabels,
+            time_points = this.options.time_points,
+            tumor_sizes = Object.assign(...this.options.tumor_sizes.map(t => ({[t[0]]: t[1]}))),
+            cluster_dict = this.options.cluster_dict,
+            child_dict = this.options.child_dict,
+            timed = this.options.timed,
+            width = this.options.width,
+            height = this.options.height,
+            margins = this.options.margins;
+
+          let x = d3.scaleLinear()
+            .domain([Math.min(...time_points), Math.max(...time_points)])
+            .range([margins.left, width - margins.right]);
+
+          let y = d3.scaleLinear()
+            .domain([0, Math.max(...Object.values(tumor_sizes))]).nice()
+            .range([height - margins.bottom, margins.top]);
+
+          let xAxis = timed ?
+            g => g
+              .attr("transform", "translate(0 " + (height - margins.bottom).toString() + ")")
+              .call(d3.axisBottom(x)) :
+            g => g
+              .attr("transform", "translate(0 " + (height - margins.bottom).toString() + ")")
+              .call(d3.axisBottom(x)).tickValues(time_points).tickFormat(d => xlabels[d]);
+
+          let yAxis = g => g
+            .attr("transform", "translate(" + margins.left.toString() + " 0)")
+            .call(d3.axisLeft(y));
+
+          let interp1d = function(u, population) {
+            let p0, p1, t0, t1;
+            if (u < time_points[0]) {
+              p0 = population[0];
+              p1 = population[1];
+              t0 = time_points[0];
+              t1 = time_points[1];
+            } else {
+              let n;
+              for (n in time_points) {
+                n = parseInt(n);
+                if (time_points[n] > u) {
+                  break;
+                }
+              }
+              p0 = population[n - 1];
+              p1 = population[n];
+              t0 = time_points[n - 1];
+              t1 = time_points[n];
+            }
+            let m = (p1 - p0) / (t1 - t0),
+              dx = u - t0;
+            return p0 + (m * dx)
+          };
+
+          let h = [],
+            tumor_size_t = Object.keys(tumor_sizes).sort((a, b) => a - b);
+          for (let i in tumor_size_t) {
+            h.push(tumor_size_t[i] - tumor_size_t[i - 1]);
+          }
+
+          let pchip = function(u, population) {
+            if (u < tumor_size_t[0] || u > tumor_size_t[tumor_size_t.length - 1]) {
+              console.log(u, tumor_size_t[tumor_size_t.length - 1]);
+              throw "Input outside interpolation range";
+            }
+            let n;
+            for (n in tumor_size_t) {
+              n = parseInt(n);
+              if (tumor_size_t[n] > u) {
+                break;
+              }
+            }
+            let p0 = population[n - 1],
+              p1 = population[n],
+              d0 = (p0 - population[n - 2]) / h[n - 1],
+              d1 = (p1 - p0) / h[n],
+              d2 = (population[n + 1] - p1) / h[n + 1],
+              fp0 = n === 1 ? d1 : (h[n - 1] * d0 + h[n] * d1) / (h[n - 1] + h[n]),
+              fp1 = n === (tumor_size_t.length - 1) ? d1 : (h[n] * d1 + h[n + 1] * d2) / (h[n] + h[n + 1]);
+            let v = (u - tumor_size_t[n - 1]) / (tumor_size_t[n] - tumor_size_t[n - 1]);
+            return Math.max(0, (p0 * ((2 * v * v * v) - (3 * v * v) + 1)) +
+              (p1 * ((-2 * v * v * v) + (3 * v * v))) +
+              (fp0 * ((v * v * v) - (2 * v * v) + v)) +
+              (fp1 * ((v * v * v) - (v * v))))
+          };
+
+          let getOrder = function(cluster, level) {
+            cluster = cluster || child_dict[null][0];
+            level = level || 1;
+            let order = [cluster],
+              breaks = {},
+              children = child_dict[cluster];
+            for (let i in children) {
+              let {order: child_order, breaks: child_breaks, level: child_level} = getOrder(children[i], level + 1);
+              order = [...order, ...child_order];
+              breaks[children[i]] = children.length > 1 ? child_level : false;
+              breaks = Object.assign({}, breaks, child_breaks);
+            }
+            return {order: order, breaks: breaks, level: level}
+          };
+
+          let {order, breaks} = getOrder(),
+            max_break = Math.max(...Object.values(breaks));
+
+          let fish_plot = d3.select(document.createElement("svg"))
+            .attr("baseProfile", "full")
+            .attr("viewBox", "0 0 " + width + " " + height)
+            .style("max-width", "500px")
+            .style("min-width", "300px")
+            .attr("version", "1.1")
+            .attr("xmlns", "http://www.w3.org/2000/svg")
+            .attr("xmlns:ev", "http://www.w3.org/2001/xml-events")
+            .attr("xmlns:xlink", "http://www.w3.org/1999/xlink");
+          fish_plot.append("g")
+            .call(xAxis);
+          fish_plot.append("g")
+            .call(yAxis);
+          fish_plot.append("text")
+            .attr("x", (width + margins.left - margins.right) / 2)
+            .attr("y", height - 5)
+            .style("text-anchor", "middle")
+            .attr("font-size", "10px")
+            .text("Time");
+          fish_plot.append("text")
+            .attr("transform", "rotate(-90 10 " + ((height + margins.top - margins.bottom) / 2).toString() + ")")
+            .attr("x", 10)
+            .attr("y", (height + margins.top - margins.bottom) / 2)
+            .style("text-anchor", "middle")
+            .attr("font-size", "10px")
+            .text("Relative size");
+          fish_plot.append("text")
+            .attr("x", width / 2)
+            .attr("y", margins.top / 2)
+            .attr("text-anchor", "middle")
+            .style("font-size", "14px")
+            .style("text-decoration", "underline")
+            .text("Tumor abundance plot");
+
+          fish_plot.selectAll("circle")
+            .data(Object.keys(tumor_sizes).filter(d => d >= Math.min(...time_points) & d <= Math.max(...time_points)))
+            .join("circle")
+            .attr("cx", d => x(d))
+            .attr("cy", d => y(tumor_sizes[d]))
+            .attr("r", 3)
+            .attr("fill", "black")
+            .attr("opacity", 0.5);
+
+          let t0 = time_points[0],
+            linspace = [t0],
+            step = (time_points[time_points.length - 1] - t0) / 100;
+          for (let i = 1; i < 101; i++) {
+            linspace.push(i * step + t0);
+          }
+
+          let abundance_stack = Array(101).fill(0);
+
+          for (let o in order) {
+            let cluster = order[order.length - o - 1],
+              unique_population = child_dict[cluster].reduce(
+                (a, c) => a.map((d, i) => d - cluster_dict[c].tumor_abundance[i]), cluster_dict[cluster].tumor_abundance
+              ),
+              base = [],
+              head = [],
+              interp_pop = tumor_size_t.map(u => interp1d(u, unique_population) * tumor_sizes[u]);
+            for (let i in linspace) {
+              base.push(x(linspace[i]) + "," + y(abundance_stack[i]));
+              abundance_stack[i] += pchip(linspace[i], interp_pop);
+              head.push(x(linspace[i]) + "," + y(abundance_stack[i]));
+            }
+            fish_plot.append("path")
+              .datum(linspace)
+              .attr("stroke", cluster_dict[cluster].color)
+              .attr("stroke-width", breaks[cluster] ? (max_break - breaks[cluster]) * 2 + 1 : 0)
+              .attr("stroke-dasharray", 4)
+              .attr("fill", "none")
+              .attr("opacity", 1.0)
+              .attr("d", d3.line()
+                .x(d => x(d))
+                .y((d, i) => y(abundance_stack[i])));
+
+            fish_plot.append("polygon")
+              .attr("points", head.join(" ") + " " + base.reverse().join(" "))
+              .attr("fill", cluster_dict[cluster].color)
+              .attr("opacity", 0.5)
+              .attr("stroke", "none");
+          }
+          fish_plot.append("g")
+            .selectAll("line")
+            .data(time_points)
+            .join("line")
+            .attr("x1", d => x(d))
+            .attr("y1", y.range()[0])
+            .attr("x2", d => x(d))
+            .attr("y2", y.range()["length"] + margins.top)
+            .attr("stroke", "black")
+            .attr("stroke-width", 1)
+            .attr("stroke-dasharray", "1 4");
+
+          this._elements.fish_plot = fish_plot.node();
+
+          this._refresh();
+
+          d3.select(this.element.context.parentElement).append("button")
+            .attr("onclick", "$(\"#fish-plot\").fish_plot(\"download\")")
+            .attr("style", "font-size: 12px;")
+            .html("Download as SVG")
+
+        },
+
+        _refresh: function() {
+          this.element.context.innerHTML = this._elements.fish_plot.outerHTML;
+        },
+
+        download: function() {
+          let dl_link = "data:text/plain;charset=utf-8," + encodeURIComponent(this._elements.fish_plot.outerHTML),
+            dl = document.createElement("a");
+          document.body.appendChild(dl);
+          dl.setAttribute("href", dl_link);
+          dl.setAttribute("download", "pt9" + ".tumor_abundance_plot.svg");
+          dl.click();
+        },
+
+        _destroy: function() {
+          this.element.context.innerHTML = "";
+          let parent = this.element.context.parentElement;
+          parent.removeChild(parent.getElementsByTagName("button")[0])
+        }
+      });
+
+      let fish_options = {"tumor_sizes": [[0.64, 1.0], [1.5, 1.0], [6.37, 1.0]], "xlabels": ["T0", "T1", "T2"], "child_dict": {"1": [2, 3], "2": [4, 5], "3": [], "4": [], "5": [], "null": [1]}, "time_points": [0.64, 1.5, 6.37], "cluster_dict": {"1": {"ccf_hat": [0.94, 0.88, 0.92], "tumor_abundance": [0.96, 0.98, 1.0], "ccf_high": [1.0, 1.0, 1.0], "color": "rgb(39,140,24)", "drivers": [], "ccf_low": [0.87, 0.75, 0.83], "muts": {"ADAMTS16_None": {"ref_cnt": ["15", "24", "37"], "ccf_hat": [0.94, 0.88, 0.92], "alt_cnt": ["22", "22", "36"], "chrom": "5", "pos": "5303783"}, "SLA_None": {"ref_cnt": ["23", "16", "40"], "ccf_hat": [0.63, 0.83, 0.57], "alt_cnt": ["7", "13", "14"], "chrom": "8", "pos": "134060168"}, "GATS_None": {"ref_cnt": ["12", "8", "17"], "ccf_hat": [0.65, 0.84, 0.81], "alt_cnt": ["4", "9", "12"], "chrom": "7", "pos": "99799033"}}, "line_width": 2.0, "cnvs": {}}, "2": {"ccf_hat": [0.12, 0.19, 0.77], "tumor_abundance": [0.11, 0.18, 0.74], "ccf_high": [0.15, 0.22, 0.81], "color": "rgb(103,200,243)", "drivers": ["KRAS_None"], "ccf_low": [0.09, 0.16, 0.72], "muts": {"VSIG10_None": {"ref_cnt": ["42", "31", "40"], "ccf_hat": [0.12, 0.12, 0.8], "alt_cnt": ["1", "1", "25"], "chrom": "12", "pos": "118519975"}, "CCDC102B_None": {"ref_cnt": ["57", "54", "35"], "ccf_hat": [0.35, 0.37, 0.91], "alt_cnt": ["8", "11", "33"], "chrom": "18", "pos": "66504112"}, "SLC30A3_None": {"ref_cnt": ["66", "41", "67"], "ccf_hat": [0.11, 0.36, 0.64], "alt_cnt": ["2", "8", "28"], "chrom": "2", "pos": "27481696"}, "AGL_None": {"ref_cnt": ["76", "67", "65"], "ccf_hat": [0.13, 0.19, 0.81], "alt_cnt": ["3", "6", "40"], "chrom": "1", "pos": "100361859"}, "PNLIPRP3_None": {"ref_cnt": ["46", "56", "61"], "ccf_hat": [0.11, 0.16, 0.74], "alt_cnt": ["1", "4", "32"], "chrom": "10", "pos": "118231381"}, "CDK15_None": {"ref_cnt": ["83", "82", "77"], "ccf_hat": [0.09, 0.18, 0.78], "alt_cnt": ["2", "7", "44"], "chrom": "2", "pos": "202719622"}, "SMOC1_None": {"ref_cnt": ["8", "12", "14"], "ccf_hat": [0.43, 0.14, 0.8], "alt_cnt": ["1", "0", "10"], "chrom": "14", "pos": "70497098"}, "PCDHB12_None": {"ref_cnt": ["72", "61", "78"], "ccf_hat": [0.14, 0.18, 0.8], "alt_cnt": ["3", "5", "47"], "chrom": "5", "pos": "140590075"}, "KRT25_None": {"ref_cnt": ["45", "40", "36"], "ccf_hat": [0.26, 0.37, 0.87], "alt_cnt": ["4", "8", "28"], "chrom": "17", "pos": "38910718"}, "CPN2_None": {"ref_cnt": ["67", "47", "53"], "ccf_hat": [0.15, 0.23, 0.83], "alt_cnt": ["2", "3", "21"], "chrom": "3", "pos": "194062583"}, "RECQL5_None": {"ref_cnt": ["42", "29", "58"], "ccf_hat": [0.05, 0.39, 0.52], "alt_cnt": ["0", "6", "18"], "chrom": "17", "pos": "73625081"}, "KRAS_None": {"ref_cnt": ["54", "42", "52"], "ccf_hat": [0.14, 0.17, 0.64], "alt_cnt": ["2", "3", "22"], "chrom": "12", "pos": "25398281"}, "SLIT2_None": {"ref_cnt": ["30", "40", "37"], "ccf_hat": [0.16, 0.14, 0.73], "alt_cnt": ["1", "2", "19"], "chrom": "4", "pos": "20598209"}, "BTBD11_None": {"ref_cnt": ["16", "10", "19"], "ccf_hat": [0.28, 0.43, 0.69], "alt_cnt": ["1", "2", "9"], "chrom": "12", "pos": "108006595"}, "RIMS3_None": {"ref_cnt": ["26", "39", "25"], "ccf_hat": [0.26, 0.1, 0.88], "alt_cnt": ["2", "1", "22"], "chrom": "1", "pos": "41092401"}, "SULT1C2_None": {"ref_cnt": ["66", "53", "51"], "ccf_hat": [0.15, 0.11, 0.69], "alt_cnt": ["3", "2", "24"], "chrom": "2", "pos": "108921156"}}, "line_width": 7.0, "cnvs": {}}, "3": {"ccf_hat": [0.62, 0.46, 0.01], "tumor_abundance": [0.56, 0.45, 0.01], "ccf_high": [0.71, 0.53, 0.02], "color": "rgb(248,139,16)", "drivers": [], "ccf_low": [0.53, 0.39, 0.01], "muts": {"APBA1_None": {"ref_cnt": ["141", "140", "244"], "ccf_hat": [0.58, 0.43, 0.02], "alt_cnt": ["39", "37", "1"], "chrom": "9", "pos": "72082799"}, "DCHS2_None": {"ref_cnt": ["63", "69", "125"], "ccf_hat": [0.5, 0.4, 0.01], "alt_cnt": ["14", "16", "0"], "chrom": "4", "pos": "155219624"}, "SMEK1_None": {"ref_cnt": ["15", "13", "28"], "ccf_hat": [0.65, 0.59, 0.07], "alt_cnt": ["5", "5", "0"], "chrom": "14", "pos": "91975925"}, "OR6A2_None": {"ref_cnt": ["45", "43", "93"], "ccf_hat": [0.75, 0.47, 0.05], "alt_cnt": ["18", "12", "1"], "chrom": "11", "pos": "6816700"}, "AXL_None": {"ref_cnt": ["29", "16", "43"], "ccf_hat": [0.78, 0.78, 0.04], "alt_cnt": ["13", "11", "0"], "chrom": "19", "pos": "41754703"}}, "line_width": 3.0, "cnvs": {}}, "4": {"ccf_hat": [0.05, 0.07, 0.24], "tumor_abundance": [0.0, 0.08, 0.23], "ccf_high": [0.08, 0.1, 0.29], "color": "rgb(16,49,41)", "drivers": [], "ccf_low": [0.02, 0.04, 0.19], "muts": {"GPR126_None": {"ref_cnt": ["76", "90", "110"], "ccf_hat": [0.07, 0.04, 0.14], "alt_cnt": ["1", "1", "7"], "chrom": "6", "pos": "142736984"}, "TSR1_None": {"ref_cnt": ["52", "38", "50"], "ccf_hat": [0.04, 0.05, 0.15], "alt_cnt": ["0", "0", "3"], "chrom": "17", "pos": "2228651"}, "TPTE_None": {"ref_cnt": ["141", "136", "192"], "ccf_hat": [0.07, 0.11, 0.33], "alt_cnt": ["3", "7", "34"], "chrom": "21", "pos": "10916407"}}, "line_width": 2.0, "cnvs": {}}, "5": {"ccf_hat": [0.15, 0.13, 0.01], "tumor_abundance": [0.11, 0.1, 0.01], "ccf_high": [0.19, 0.16, 0.01], "color": "rgb(93,119,254)", "drivers": [], "ccf_low": [0.11, 0.09, 0.01], "muts": {"LRP5_None": {"ref_cnt": ["37", "36", "79"], "ccf_hat": [0.25, 0.1, 0.02], "alt_cnt": ["3", "1", "0"], "chrom": "11", "pos": "68192679"}, "OR10AG1_None": {"ref_cnt": ["43", "36", "60"], "ccf_hat": [0.22, 0.2, 0.03], "alt_cnt": ["3", "3", "0"], "chrom": "11", "pos": "55735582"}, "GAK_None": {"ref_cnt": ["28", "24", "37"], "ccf_hat": [0.25, 0.28, 0.05], "alt_cnt": ["2", "3", "0"], "chrom": "4", "pos": "887237"}, "GATAD2B_None": {"ref_cnt": ["96", "85", "149"], "ccf_hat": [0.25, 0.15, 0.01], "alt_cnt": ["9", "6", "0"], "chrom": "1", "pos": "153792153"}, "NDFIP1_None": {"ref_cnt": ["55", "64", "124"], "ccf_hat": [0.18, 0.12, 0.01], "alt_cnt": ["3", "3", "0"], "chrom": "5", "pos": "141517393"}, "PPWD1_None": {"ref_cnt": ["82", "50", "118"], "ccf_hat": [0.18, 0.11, 0.01], "alt_cnt": ["5", "2", "0"], "chrom": "5", "pos": "64872738"}, "APOBEC3A_None": {"ref_cnt": ["52", "40", "103"], "ccf_hat": [0.04, 0.22, 0.02], "alt_cnt": ["0", "4", "0"], "chrom": "22", "pos": "39355620"}, "EXOC1_None": {"ref_cnt": ["50", "38", "65"], "ccf_hat": [0.05, 0.19, 0.03], "alt_cnt": ["0", "3", "0"], "chrom": "4", "pos": "56734691"}, "TAOK2_None": {"ref_cnt": ["16", "21", "34"], "ccf_hat": [0.28, 0.31, 0.05], "alt_cnt": ["1", "3", "0"], "chrom": "16", "pos": "29994548"}, "GABPB1_None": {"ref_cnt": ["72", "65", "115"], "ccf_hat": [0.17, 0.03, 0.01], "alt_cnt": ["4", "0", "0"], "chrom": "15", "pos": "50595263"}, "GINS3_None": {"ref_cnt": ["10", "13", "20"], "ccf_hat": [0.38, 0.45, 0.09], "alt_cnt": ["1", "3", "0"], "chrom": "16", "pos": "58438639"}}, "line_width": 5.0, "cnvs": {}}}};
+
+      if (fish_options) {
+        $("#fish-plot").fish_plot(fish_options)
+      }
+    })
+  </script>
+  <style>
+    .active-sample:hover {
+      background-color: #f0f0f0;
+    }
+
+    .removed-sample {
+      background-color: gray;
+    }
+
+    .active-cluster {
+      opacity: 1.0;
+    }
+
+    .removed-cluster {
+      opacity: 0.2;
+    }
+  </style>
+</head>
+
+<body>
+  <main>
+    <div class="container-fluid">
+      <div class="row">
+        <h2 class="ml-3" >Phylogic Results - pt9</h2>
+      </div>
+      <div class="card">
+        <div id="headingOne" class="card-header">
+          <h5 class="mb-0">
+            <button class="btn btn-link" data-toggle="collapse" data-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+              Clustering plot/tree
+            </button>
+          </h5>
+        </div>
+        <div id="collapseOne" class="collapse show" aria-labelledby="headingOne">
+          <div class="card-body">
+            <div class="row">
+              <div id="sample-name-table" style="max-height: 600px; width: 25%; padding-right: 30px; overflow-y: auto; display: table-cell">
+              </div><div class="border-right" style="overflow-y: hidden; width: 45%; padding-right: 30px; display: table-cell">
+                <div style="min-width: 450px">
+                  <div style="display: inline-block; width: 84%; vertical-align: top">
+                    <div id="clustering-plot"></div>
+                    <div id="treatment-plot"></div>
+                    <button onclick="$('#clustering-plot').clustering_plot('download')" style="font-size: 12px">Download as SVG</button>
+                  </div><div style="display: inline-block; width: 16%; vertical-align: top">
+                    <div id="time-switch"></div>
+                    <div id="cluster-switches" style="overflow-x: hidden"></div>
+                  </div>
+                </div>
+              </div><div style="width: 30%">
+                <div id="tree"></div>
+                <div id="tree-switch"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div id="headingTwo" class="card-header">
+          <h5 class="mb-0">
+            <button class="btn btn-link" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="true" aria-controls="collapseTwo">
+              Clonality chart
+            </button>
+          </h5>
+        </div>
+        <div id="collapseTwo" class="collapse show" aria-labelledby="headingTwo">
+          <div class="card-body">
+            <div class="row">
+              <div id="mutation-visual" class="col-md-12 overflow-auto"></div>
+              <button onclick="$('#mutation-visual').mutation_visual('download')" style="font-size: 12px">Download as SVG</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div id="headingThree" class="card-header">
+          <h5 class="mb-0">
+            <button class="btn btn-link" data-toggle="collapse" data-target="#collapseThree" aria-expanded="true" aria-controls="collapseThree">
+              Mutation table
+            </button>
+          </h5>
+        </div>
+        <div id="collapseThree" class="collapse show" aria-labelledby="headingThree">
+          <div class="card-body">
+            <div class="row">
+              <div id="cluster-table" class="col-md-12 overflow-auto"></div>
+            </div>
+            <button onclick="$('#cluster-table').cluster_table('download_as_tsv')" style="font-size: 12px">Download as TSV</button>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div id="headingFour" class="card-header">
+          <h5 class="mb-0">
+            <button class="btn btn-link" data-toggle="collapse" data-target="#collapseFour" aria-expanded="true" aria-controls="collapseFour">
+              Other plots
+            </button>
+          </h5>
+        </div>
+        <div id="collapseFour" class="collapse show" aria-labelledby="headingFour">
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-6 text-center">
+                <div id="mutation-plot"></div>
+                <button onclick="$('#mutation-plot').mutation_plot('download')" style="font-size: 12px">Download as SVG</button>
+              </div>
+              <div class="col-md-6 text-center">
+                <div id="fish-plot"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="row" style="padding-bottom: 50px"></div>
+    </div>
+  </main>
+</body>
+</html>
