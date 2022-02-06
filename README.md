@@ -11,7 +11,12 @@ This repository contains the code for the Monte Carlo simulations used to simula
 * Monte Carlo simulations:
     * g++ compiler
     * recommend running on a server to take full advantage of parallelization. Was run on server with Ubuntu 18.04.1 LTS.
+* analysis for figures 2 and 3
+    * Jupyter Notebook
+    * Python3
+    * Python pacakges pandas, numpy, os, pathlib, sys, seaborn, matplotlib, math, and importlib.metadata
 * CLL analysis
+    * R
     * R packages dplyr, pracma, MASS, Rmpfr, ggplot2, tidyr
 
 
@@ -46,6 +51,9 @@ cd Cancer_Inf_Sims
 make parallel_paper
 ./MCSim run_inputs.txt
 ```
+
+### Code accompanying figures 2 and 3
+The jupyter notebook `simulations/figures_2_and_3.ipynb` computes estimates from the results of the Monte Carlo simulation, simulates sequencing reads, and comparing corrections for $t_1$ and $\gamma$. 
 
 ### Generating estimates for CLL patients
 

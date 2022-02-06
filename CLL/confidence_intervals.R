@@ -871,8 +871,8 @@ generate_CIs_multiple_pts <- function(pt_list){
       out <- generate_estimates_pt21()
     }
 
-    filename_CIs <- paste0("CIs_final/pt",pt,"_CIs.csv")
-    filename_params <- paste0("CIs_final/pt",pt,"_params.csv")
+    filename_CIs <- paste0("more_runs/pt",pt,"_CIs.csv")
+    filename_params <- paste0("more_runs/pt",pt,"_params.csv")
     write.csv(out[[1]], file = filename_CIs)
     write.csv(out[[2]], file = filename_params)
     
