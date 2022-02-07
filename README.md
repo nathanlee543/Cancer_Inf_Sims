@@ -53,7 +53,7 @@ make parallel_paper
 ```
 
 ### Code accompanying figures 2 and 3
-The jupyter notebook `simulations/figures_2_and_3.ipynb` computes estimates from the results of the Monte Carlo simulation, simulates sequencing reads, and comparing corrections for $t_1$ and $\gamma$. 
+The jupyter notebook `simulations/figures_2_and_3.ipynb` computes estimates from the results of the Monte Carlo simulation, simulates sequencing reads, and comparing corrections for $t<sub>1</sub>$ and γ.
 
 ### Generating estimates for CLL patients
 
