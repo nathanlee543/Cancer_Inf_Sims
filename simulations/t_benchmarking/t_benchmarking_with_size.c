@@ -143,9 +143,9 @@ int main(int argc, char *argv[]){
         double b,d;
         b = stod(str2[0],NULL);
         d = stod(str2[1],NULL);
-        int num_threads = strtol(str2[3],NULL,10); 
-        int runs = strtol(str2[4],NULL,10);
-        int par0_single_run1 = strtol(str2[5],NULL,10);
+        int num_threads = strtol(str2[2],NULL,10); 
+        int runs = strtol(str2[3],NULL,10);
+        int par0_single_run1 = strtol(str2[4],NULL,10);
 
         printf("argc:%i\n",argc);
     
