@@ -24,7 +24,7 @@ double surviving_runs;
 
 ofstream myfile;
 
-double expansion(double b, double d)
+double expansion(double b, double d, FILE *fp)
 {    
     double cells;
     double Time,time_scale;
@@ -102,6 +102,7 @@ int main(int argc, char *argv[]){
         
         // processing the input files
         FILE * pFile;
+        FILE * fp
         char * filename = argv[1];
         int param_count = 5;
         char  str[param_count][100];
@@ -158,17 +159,9 @@ int main(int argc, char *argv[]){
         int counter;
         
         // add a header to the output file
-        /*
         fp = fopen("t_benchmarking_simulation_results.txt","w");    
         fprintf(fp,"t_estimate,t_true,tumor_size\n");
         fclose(fp);
-        */
-        char fp[sizeof "t_benchmarking_simulation_results.txt"];
-        sprintf(fp, "t_benchmarking_simulation_results.txt");
-        
-        myfile.open(fp,fstream::app);  
-        myfile << "t_estimate,t_true,tumor_size\n";
-        myfile.close(); 
            
         // input file determines if we multithread
         if (par0_single_run1 == 0)
@@ -179,12 +172,12 @@ int main(int argc, char *argv[]){
             #pragma omp parallel for
                 for(counter=0; counter<runs;counter++ )
                 {
-                    surviving_runs+=expansion(b, d);
+                    surviving_runs+=expansion(b, d, fp);
                     printf("finished job %f\n",surviving_runs);
                 }
         } else // otherwise, do a single run
         {
-            expansion(b, d);
+            expansion(b, d, fp);
         }
         // save the true parameter values to textfile
         myfile.open("true_b_d.txt");
