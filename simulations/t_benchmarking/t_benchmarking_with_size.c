@@ -16,7 +16,7 @@
 
 using namespace std;
 
-const gsl_rng_type * T;
+const gsl_rng_type * T; 
 gsl_rng * r;
 
 double true_params_out[2];
@@ -162,13 +162,20 @@ int main(int argc, char *argv[]){
         if (par0_single_run1 == 0)
         {
             surviving_runs=0.0;
+            int completed = 0;
             omp_set_dynamic(0);     // Explicitly disable dynamic teams
             omp_set_num_threads(num_threads); // set number of threads for multithreading
-            #pragma omp parallel for
+            #pragma omp parallel for shared(completed)
                 for(counter=0; counter<runs;counter++ )
                 {
                     surviving_runs+=expansion(b, d, fp);
-                    printf("finished job %f\n",surviving_runs);
+                    //printf("finished job %f\n",surviving_runs);
+
+                    #pragma omp critical(PRINT)
+                    {
+                        completed++;
+                        cout << completed << " / " << runs << endl; 
+                    }
                 }
         } else // otherwise, do a single run
         {
