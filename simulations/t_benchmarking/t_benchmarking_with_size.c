@@ -32,7 +32,7 @@ double expansion(double b, double d, FILE *fp)
     double t_estimate, t_true;
     double time_init = 0.0;
     int tumor_size_length = 8;
-    double tumor_size[tumor_size_length] = {pow(10.0,3),pow(10.0,4),pow(10.0,5),pow(10.0,6),pow(10.0,7),pow(10.0,8),pow(10.0,9), pow(10,10)};
+    double tumor_size[tumor_size_length] = {pow(10.0,3),pow(10.0,4),pow(10.0,5),pow(10.0,6),pow(10.0,7),pow(10.0,8),pow(10.0,9), pow(10.0,10)};
     
     // initializing
     int tumor_size_i = 1;
@@ -88,7 +88,6 @@ double expansion(double b, double d, FILE *fp)
         rand=gsl_ran_flat(r,0.0,cells);
 
     }    
-
     return 1.0;
 }
 
@@ -129,7 +128,6 @@ int main(int argc, char *argv[]){
             for (j = 0;j<100;j++){
                 
                 if (str[i][j]=='#'){
-                    printf("comment removed");
                     cout << str[i][j] << endl;
                     j = 100;
                 } else{
@@ -138,7 +136,6 @@ int main(int argc, char *argv[]){
                 }
             }
         }
-        printf("print str2[0]:%s\n",str[0]);
         
         double b,d;
         b = stod(str2[0],NULL);
@@ -146,8 +143,6 @@ int main(int argc, char *argv[]){
         int num_threads = strtol(str2[2],NULL,10); 
         int runs = strtol(str2[3],NULL,10);
         int par0_single_run1 = strtol(str2[4],NULL,10);
-
-        printf("argc:%i\n",argc);
     
         gsl_rng_env_setup();
         T = gsl_rng_default;
@@ -177,7 +172,8 @@ int main(int argc, char *argv[]){
                 }
         } else // otherwise, do a single run
         {
-            expansion(b, d, fp);
+            surviving_runs=expansion(b, d, fp);
+            printf("finished job %f\n",surviving_runs);
         }
         // save the true parameter values to textfile
         myfile.open("true_b_d.txt");
