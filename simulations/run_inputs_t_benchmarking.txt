@@ -1,0 +1,5 @@
+0.25#b
+0.18#d
+10#num_threads
+1#runs
+1#parallel=0, sinlge_run = 1
