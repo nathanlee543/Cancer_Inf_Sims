@@ -76,7 +76,7 @@ double expansion(double b, double d, FILE *fp)
             t_true = Time;
             // write results to output file as csv
             fp = fopen("t_benchmarking_simulation_results.txt","a");    
-            fprintf(fp, "%d,%d,%d\n",t_estimate, t_true, tumor_size[tumor_size_i]);
+            fprintf(fp, "%f,%f,%f\n",t_estimate, t_true, tumor_size[tumor_size_i]);
             fclose(fp); 
 
             tumor_size_i += 1;
@@ -102,7 +102,7 @@ int main(int argc, char *argv[]){
         
         // processing the input files
         FILE * pFile;
-        FILE * fp
+        FILE * fp;
         char * filename = argv[1];
         int param_count = 5;
         char  str[param_count][100];
