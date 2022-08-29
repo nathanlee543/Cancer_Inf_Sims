@@ -35,7 +35,7 @@ double expansion(double b, double d, FILE *fp)
     double tumor_size[tumor_size_length] = {pow(10.0,3),pow(10.0,4),pow(10.0,5),pow(10.0,6),pow(10.0,7),pow(10.0,8),pow(10.0,9), pow(10.0,10)};
     
     // initializing
-    int tumor_size_i = 1;
+    int tumor_size_i = 0;
     cells = 1.0;
     Time = time_init;
 
@@ -46,7 +46,7 @@ double expansion(double b, double d, FILE *fp)
 
     // birth-death process with one type
     // run until we hit max tumor size
-    for (; cells < tumor_size[tumor_size_length]; )
+    for (; cells < tumor_size[tumor_size_length-1]; )
     {
         if (rand<b*cells/(b+d))
         {
@@ -63,7 +63,7 @@ double expansion(double b, double d, FILE *fp)
         if (cells == 0.0)
         {
             // initializing
-            tumor_size_i = 1;
+            tumor_size_i = 0;
             cells = 1.0;
             Time = time_init;
         }
