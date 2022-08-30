@@ -31,8 +31,8 @@ double expansion(double b, double d, FILE *fp)
     double rand;
     double t_estimate, t_true;
     double time_init = 0.0;
-    int tumor_size_length = 8;
-    double tumor_size[tumor_size_length] = {pow(10.0,3),pow(10.0,4),pow(10.0,5),pow(10.0,6),pow(10.0,7),pow(10.0,8),pow(10.0,9), pow(10.0,10)};
+    int tumor_size_length = 7;
+    double tumor_size[tumor_size_length] = {pow(10.0,3),pow(10.0,4),pow(10.0,5),pow(10.0,6),pow(10.0,7),pow(10.0,8),pow(10.0,9)};
     
     // initializing
     int tumor_size_i = 0;
