@@ -39,7 +39,7 @@ double expansion(double b[3], double d[3], double t1, double t2, double t, doubl
         double cells[3];
         double alpha1, alpha2, beta1, beta2;
         double beta2_min = 0.1, beta2_max = 0.9, beta1_min = 0.1, beta1_max = 0.9; 
-        double f1, f2, nf1, nf2, min_SNV_count,Time,time_scale;
+        double f1, f2, nf1, nf2,Time,time_scale;
         int num_clones[3] = {0,0,0};
         int num_surviving_clones[3];
         double rand;
@@ -49,10 +49,10 @@ double expansion(double b[3], double d[3], double t1, double t2, double t, doubl
         double M1 = 0.0, M2 = 0.0;
         double WBC1[3] = {0.0,0.0,0.0};
         double WBC2[3] = {0.0,0.0,0.0};
-        double m1_clonal = 0.0, m2_clonal, m1 = 0.0, m2 = 0.0, subclonal = 0.0;
+        double m1_clonal = 0.0, m2_clonal = 0.0, m1 = 0.0, m2 = 0.0, subclonal = 0.0;
         int m1_int = 0, m2_int = 0;
         double m1_obs, m2_obs;
-        int clone_ind;
+        int clone_ind1, clone_ind2;
         double r_hat, r1_hat, r2_hat, t1_hat, t2_hat, tau1_hat, tau2_hat, u_hat, u_top, u_bottom, m1_hat, m2_hat;
         double time_init[3] = {0.0,t1,t2};
         int m1_mutations[1000], m2_mutations[1000];
@@ -95,20 +95,20 @@ double expansion(double b[3], double d[3], double t1, double t2, double t, doubl
                     {
                         if (rand<Clone[j][driver])
                         {
-                            clone_ind = j;
-                            m1_mutations[m1_int] = clone_ind;
+                            clone_ind1 = j;
+                            m1_mutations[m1_int] = clone_ind1;
                             j=num_clones[driver]+1;
                         }
                         else rand-=Clone[j][driver];
                     }
-                    Clone[clone_ind][driver] -= 1.0;
-                    // now find how many passengers clone_ind has at t1 (m)
-                    for (; clone_ind > 0;)
+                    Clone[clone_ind1][driver] -= 1.0;
+                    // now find how many passengers clone_ind1 has at t1 (m)
+                    for (; clone_ind1 > 0;)
                     {
-                        clone_ind = ancestor[clone_ind][driver];
+                        clone_ind1 = ancestor[clone_ind1][driver];
                         m1 += 1.0;
                         m1_int += 1;
-                        m1_mutations[m1_int] = clone_ind;
+                        m1_mutations[m1_int] = clone_ind1;
                     }
                 }
 
@@ -127,20 +127,20 @@ double expansion(double b[3], double d[3], double t1, double t2, double t, doubl
                     {
                         if (rand<Clone[j][driver])
                         {
-                            clone_ind = j;
-                            m2_mutations[m2_int] = clone_ind;
+                            clone_ind2 = j;
+                            m2_mutations[m2_int] = clone_ind2;
                             j=num_clones[driver]+1;
                         }
                         else rand-=Clone[j][driver];
                     }
-                    Clone[clone_ind][driver] -= 1.0;
-                    // now find how many passengers clone_ind has at t2 (m)
-                    for (; clone_ind > 0;)
+                    Clone[clone_ind2][driver] -= 1.0;
+                    // now find how many passengers clone_ind2 has at t2 (m)
+                    for (; clone_ind2 > 0;)
                     {
-                        clone_ind = ancestor[clone_ind][driver];
+                        clone_ind2 = ancestor[clone_ind2][driver];
                         m2 += 1.0;
                         m2_int += 1;
-                        m2_mutations[m2_int] = clone_ind;
+                        m2_mutations[m2_int] = clone_ind2;
                     }
                 }
 
@@ -276,9 +276,6 @@ double expansion(double b[3], double d[3], double t1, double t2, double t, doubl
             f2 = 0.2;
             nf1 = f1*M2;
             nf2 = f2*M2;
-
-            // the minimum frequency of a variant that will be saved to file is 1%
-            min_SNV_count = 0.01*M2;
 
             for (driver=0; driver<3;driver++)
             {
@@ -442,7 +439,7 @@ int main(int argc, char *argv[]){
         fclose(ft);
 
         ft = fopen("true_params.txt","a");
-        fprintf(ft,"%f,%f,%f,%f,%f,%f,%f\n",true_params_out[0],true_params_out[1],true_params_out[2],true_params_out[3],true_params_out[4],true_params_out[5],true_params_out[6],true_params_out[7]);
+        fprintf(ft,"%f,%f,%f,%f,%f,%f,%f,%f\n",true_params_out[0],true_params_out[1],true_params_out[2],true_params_out[3],true_params_out[4],true_params_out[5],true_params_out[6],true_params_out[7]);
         fclose(ft);
 
         int counter;
