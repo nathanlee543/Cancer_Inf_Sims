@@ -472,7 +472,7 @@ int main(int argc, char *argv[]){
                 }
         } else // otherwise, do a single run
         {
-            expansion(b, d, t1, t, delta, u, max_clones);
+            expansion(b, d, t1, t2, t, delta, u, max_clones, fp);
         }
     }
 
