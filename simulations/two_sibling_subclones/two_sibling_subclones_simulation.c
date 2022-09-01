@@ -53,7 +53,7 @@ double expansion(double b[3], double d[3], double t1, double t2, double t, doubl
         int m1_int = 0, m2_int = 0;
         double m1_obs, m2_obs;
         int clone_ind;
-        double r_hat, r1_hat, r2_hat, t1_hat, t2_hat, tau1_hat, tau2_hat, u_hat, u_top, u_bottom;
+        double r_hat, r1_hat, r2_hat, t1_hat, t2_hat, tau1_hat, tau2_hat, u_hat, u_top, u_bottom, m1_hat, m2_hat;
         double time_init[3] = {0.0,t1,t2};
         int m1_mutations[1000], m2_mutations[1000];
 
@@ -109,8 +109,6 @@ double expansion(double b[3], double d[3], double t1, double t2, double t, doubl
                         m1 += 1.0;
                         m1_int += 1;
                         m1_mutations[m1_int] = clone_ind;
-
-                        if (clone_ind == 0) printf("true m: %f \n", m);
                     }
                 }
 
@@ -143,8 +141,6 @@ double expansion(double b[3], double d[3], double t1, double t2, double t, doubl
                         m2 += 1.0;
                         m2_int += 1;
                         m2_mutations[m2_int] = clone_ind;
-
-                        if (clone_ind == 0) printf("true m2: %f \n", m);
                     }
                 }
 
@@ -313,14 +309,15 @@ double expansion(double b[3], double d[3], double t1, double t2, double t, doubl
             t1_hat = m1_hat/u_hat;
             t2_hat = m2_hat/u_hat;
 
-            tau1_hat = (1./r1_hat)*log(WBC2[1])
-            tau2_hat = (1./r2_hat)*log(WBC2[2])
+            tau1_hat = (1./r1_hat)*log(WBC2[1]);
+            tau2_hat = (1./r2_hat)*log(WBC2[2]);
    
             #pragma omp critical (write_estimates)
+            {
                 fp = fopen("sibling_subclones_simulation_results.txt","a");    
                 fprintf(fp, "%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f\n",r_hat, r1_hat, r2_hat, u_hat, t1_hat, t2_hat, tau1_hat,tau2_hat, m1, m2, m1_obs, m2_obs, subclonal, alpha1, alpha2, beta1, beta2);
                 fclose(fp);
-            
+            }
             // free memory
             delete[] Clone;
             delete[] surviving_clone;
