@@ -316,7 +316,7 @@ double expansion(double b[3], double d[3], double t1, double t2, double t, doubl
             tau1_hat = (1./r1_hat)*log(WBC2[1])
             tau2_hat = (1./r2_hat)*log(WBC2[2])
    
-            #pragma omp critical
+            #pragma omp critical (write_estimates)
                 fp = fopen("sibling_subclones_simulation_results.txt","a");    
                 fprintf(fp, "%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f\n",r_hat, r1_hat, r2_hat, u_hat, t1_hat, t2_hat, tau1_hat,tau2_hat, m1, m2, m1_obs, m2_obs, subclonal, alpha1, alpha2, beta1, beta2);
                 fclose(fp);
@@ -467,7 +467,7 @@ int main(int argc, char *argv[]){
                 {
                     surviving_runs+=expansion(b, d, t1, t2, t, delta, u, max_clones, fp);
                     
-                    #pragma omp critical(PRINT)
+                    #pragma omp critical (status)
                     {
                         completed++;
                         cout << completed << " / " << runs << endl; 
