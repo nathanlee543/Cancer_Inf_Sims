@@ -48,7 +48,6 @@ double expansion(double b[3], double d[3], double t1, double t2, double t, doubl
         int t_yet[3] = {0,0,0};
         double M1 = 0.0, M2 = 0.0;
         double WBC1[3] = {0.0,0.0,0.0};
-        double WBC2[3] = {0.0,0.0,0.0};
         double m1_clonal = 0.0, m2_clonal = 0.0, m1 = 0.0, m2 = 0.0, subclonal = 0.0;
         int m1_int = 0, m2_int = 0;
         double m1_obs, m2_obs;
@@ -266,11 +265,11 @@ double expansion(double b[3], double d[3], double t1, double t2, double t, doubl
         {
             // calculate M1, M2, and clone frequencies
             M1 = WBC1[0] + WBC1[1] + WBC1[2];
-            M2 = WBC2[0] + WBC2[1] + WBC2[2];
+            M2 = cells[0] + cells[1] + cells[2];
             alpha1 = WBC1[1]/M1;
             alpha2 = WBC1[2]/M1;
-            beta1 = WBC2[1]/M2;
-            beta2 = WBC2[2]/M2;
+            beta1 = cells[1]/M2;
+            beta2 = cells[2]/M2;
 
             f1 = 0.01;
             f2 = 0.2;
@@ -284,7 +283,6 @@ double expansion(double b[3], double d[3], double t1, double t2, double t, doubl
                     if (driver == 1 && surviving_clone[i][driver] == cells[driver]) m1_clonal += 1.0; 
                     if (driver == 2 && surviving_clone[i][driver] == cells[driver]) m2_clonal += 1.0; 
                     if (surviving_clone[i][driver]>nf1 && surviving_clone[i][driver]<nf2) subclonal += 1.0;
-
                 }
             }
             m1_obs = m1 + m1_clonal;
@@ -293,9 +291,9 @@ double expansion(double b[3], double d[3], double t1, double t2, double t, doubl
             
             // Compute estimates
             // note, WBC variable is equivalent to WBC1_i = CCF_i * M1
-            r_hat = (1./delta)*log(WBC2[0]/WBC1[0]);
-            r1_hat = (1./delta)*log(WBC2[1]/WBC1[1]);
-            r2_hat = (1./delta)*log(WBC2[2]/WBC1[2]);            
+            r_hat = (1./delta)*log(cells[0]/WBC1[0]);
+            r1_hat = (1./delta)*log(cells[1]/WBC1[1]);
+            r2_hat = (1./delta)*log(cells[2]/WBC1[2]);            
 
             u_top = f1*f2*subclonal;
             u_bottom = (f2-f1)*((1-beta1-beta2)/r_hat + beta1/r1_hat + beta2/r2_hat);
@@ -306,8 +304,8 @@ double expansion(double b[3], double d[3], double t1, double t2, double t, doubl
             t1_hat = m1_hat/u_hat;
             t2_hat = m2_hat/u_hat;
 
-            tau1_hat = (1./r1_hat)*log(WBC2[1]);
-            tau2_hat = (1./r2_hat)*log(WBC2[2]);
+            tau1_hat = (1./r1_hat)*log(cells[1]);
+            tau2_hat = (1./r2_hat)*log(cells[2]);
    
             #pragma omp critical (write_estimates)
             {
@@ -321,8 +319,6 @@ double expansion(double b[3], double d[3], double t1, double t2, double t, doubl
             delete[] where;
             delete[] ancestor;
             delete[] surviving_ancestor;
-
-            
             
             // only return if it's a macroscopic subclone (if .1 < beta1, beta2 < .9)
             if (beta1 > beta1_min && beta1 < beta1_max && beta2 > beta2_min && beta2 < beta2_max)
@@ -331,7 +327,7 @@ double expansion(double b[3], double d[3], double t1, double t2, double t, doubl
             }
             else
             {   
-                printf("restart");
+                printf("restart\n");
                 goto restart_sim;
             }
         }
