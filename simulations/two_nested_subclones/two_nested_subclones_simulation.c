@@ -53,7 +53,7 @@ double expansion(double b[3], double d[3], double t1, double t2prime, double t, 
         double m1_obs, m2_obs;
         int clone_ind1, clone_ind2;
         double r_hat, r1_hat, r2_hat, t1_hat, t2prime_hat, t_hat, u_hat, u_top, u_bottom, m1_hat, m2_hat;
-        double time_init[3] = {0.0,t1,t2};
+        double time_init[3] = {0.0,t1,t1+t2prime};
         int m1_mutations[1000], m2_mutations[1000];
 
         // initializing 
@@ -310,7 +310,7 @@ double expansion(double b[3], double d[3], double t1, double t2prime, double t, 
             #pragma omp critical (write_estimates)
             {
                 fp = fopen("sibling_subclones_simulation_results.txt","a");    
-                fprintf(fp, "%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f\n",r_hat, r1_hat, r2_hat, u_hat, t1_hat, t2prime_hat, t_hat, m1, m2, m1_obs, m2_obs, subclonal, alpha1c, alpha2c, beta1, beta2);
+                fprintf(fp, "%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f\n",r_hat, r1_hat, r2_hat, u_hat, t1_hat, t2prime_hat, t_hat, m1, m2, m1_obs, m2_obs, subclonal, alpha1c, alpha2c, beta1c, beta2c);
                 fclose(fp);
             }
             // free memory
