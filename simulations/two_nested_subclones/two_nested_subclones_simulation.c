@@ -309,7 +309,7 @@ double expansion(double b[3], double d[3], double t1, double t2, double t, doubl
    
             #pragma omp critical (write_estimates)
             {
-                fp = fopen("sibling_subclones_simulation_results.txt","a");    
+                fp = fopen("nested_subclones_simulation_results.txt","a");    
                 fprintf(fp, "%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f\n",r_hat, r1_hat, r2_hat, u_hat, t1_hat, t2prime_hat, t_hat, m1, m2, m1_obs, m2_obs, subclonal, alpha1c, alpha2c, beta1c, beta2c);
                 fclose(fp);
             }
@@ -442,7 +442,7 @@ int main(int argc, char *argv[]){
         int counter;
         
         // add a header to the output file
-        fp = fopen("sibling_subclones_simulation_results.txt","w");    
+        fp = fopen("nested_subclones_simulation_results.txt","w");    
         fprintf(fp,"r_hat,r1_hat,r2_hat,u_hat,t1_hat,t2prime_hat,t_hat,m1,m2,m1_obs,m2_obs,gamma,alpha1c,alpha2c,beta1c,beta2c\n");
         fclose(fp);
 
