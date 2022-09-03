@@ -22,7 +22,7 @@ double surviving_runs;
 
 ofstream myfile;
 
-double expansion(double b[3], double d[3], double t1, double t2prime, double t, double delta, double u, int max_clones, FILE *fp)
+double expansion(double b[3], double d[3], double t1, double t2, double t, double delta, double u, int max_clones, FILE *fp)
 {
     restart_sim:
         
@@ -53,7 +53,7 @@ double expansion(double b[3], double d[3], double t1, double t2prime, double t, 
         double m1_obs, m2_obs;
         int clone_ind1, clone_ind2;
         double r_hat, r1_hat, r2_hat, t1_hat, t2prime_hat, t_hat, u_hat, u_top, u_bottom, m1_hat, m2_hat;
-        double time_init[3] = {0.0,t1,t1+t2prime};
+        double time_init[3] = {0.0,t1,t2};
         int m1_mutations[1000], m2_mutations[1000];
 
         // initializing 
@@ -395,7 +395,7 @@ int main(int argc, char *argv[]){
         }
         printf("print str2[0]:%s\n",str[0]);
         
-        double b[3],d[3],t1,t2,t,delta,u;
+        double b[3],d[3],t1,t2prime,t2,t,delta,u;
         b[0] = stod(str2[0],NULL);
         b[1] = stod(str2[1],NULL);
         b[2] = stod(str2[2],NULL);
@@ -403,7 +403,7 @@ int main(int argc, char *argv[]){
         d[1] = stod(str2[4],NULL);
         d[2] = stod(str2[5],NULL);
         t1 = stod(str2[6],NULL);
-        t2 = stod(str2[7],NULL);
+        t2prime = stod(str2[7],NULL);
         t = stod(str2[8],NULL);
         delta = stod(str2[9],NULL);
         u = stod(str2[10],NULL);
@@ -424,13 +424,15 @@ int main(int argc, char *argv[]){
         true_params_out[2] = (b[2] - d[2]); // r2
         true_params_out[3] = u; 
         true_params_out[4] = t1;
-        true_params_out[5] = t2;
+        true_params_out[5] = t2prime;
         true_params_out[6] = t;
+
+        t2 = t1 + t2prime;
 
         // save the true parameter values to textfile
         // add a header to the output file
         ft = fopen("true_params.txt","w");    
-        fprintf(ft,"r,r1,r2,u,t1,t2,t\n");
+        fprintf(ft,"r,r1,r2,u,t1,t2prime,t\n");
         fclose(ft);
 
         ft = fopen("true_params.txt","a");
