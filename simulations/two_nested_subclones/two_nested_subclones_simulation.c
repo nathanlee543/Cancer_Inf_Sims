@@ -224,6 +224,12 @@ double expansion(double b[3], double d[3], double t1, double t2, double t, doubl
             {
                 Clone[ancestor[i][driver]][driver]+=Clone[i][driver];
             }
+
+            // calculate number of mutations fixed in type-1 population after t1
+            for (i=0; i<num_clones[1]; i++)
+            {
+                if (Clone[i][1] == cells[1]) m1_clonal += 1.0; 
+            }
             
             // add cells[1] to subclone size for the m1 mutations
             for (i = 0; i <= m1_int; i++)
@@ -281,7 +287,6 @@ double expansion(double b[3], double d[3], double t1, double t2, double t, doubl
             {
                 for (i=0; i<num_surviving_clones[driver]; i++)
                 {
-                    if (driver == 1 && surviving_clone[i][driver] == cells[driver]) m1_clonal += 1.0; 
                     if (driver == 2 && surviving_clone[i][driver] == cells[driver]) m2_clonal += 1.0; 
                     if (surviving_clone[i][driver]>nf1 && surviving_clone[i][driver]<nf2) subclonal += 1.0;
                 }
