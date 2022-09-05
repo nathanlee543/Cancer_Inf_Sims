@@ -17,7 +17,7 @@ using namespace std;
 const gsl_rng_type * T;
 gsl_rng * r;
 
-double true_params_out[7];
+double true_params_out[8];
 double surviving_runs;
 
 ofstream myfile;
@@ -228,7 +228,7 @@ double expansion(double b[3], double d[3], double t1, double t2, double t, doubl
             // add cells[1] to subclone size for the m1 mutations
             for (i = 0; i <= m1_int; i++)
             {
-                Clone[m1_mutations[i]][0] += cells[1];
+                Clone[m1_mutations[i]][0] += cells[1]+cells[2];
             }
             // add cells[2] to subclone size for the m2 mutations
             for (i = 0; i <= m2_int; i++)
@@ -426,17 +426,18 @@ int main(int argc, char *argv[]){
         true_params_out[4] = t1;
         true_params_out[5] = t2prime;
         true_params_out[6] = t;
+        true_params_out[7] = delta
 
         t2 = t1 + t2prime;
 
         // save the true parameter values to textfile
         // add a header to the output file
         ft = fopen("true_params.txt","w");    
-        fprintf(ft,"r,r1,r2,u,t1,t2prime,t\n");
+        fprintf(ft,"r,r1,r2,u,t1,t2prime,t,delta\n");
         fclose(ft);
 
         ft = fopen("true_params.txt","a");
-        fprintf(ft,"%f,%f,%f,%f,%f,%f,%f\n",true_params_out[0],true_params_out[1],true_params_out[2],true_params_out[3],true_params_out[4],true_params_out[5],true_params_out[6]);
+        fprintf(ft,"%f,%f,%f,%f,%f,%f,%f,%f\n",true_params_out[0],true_params_out[1],true_params_out[2],true_params_out[3],true_params_out[4],true_params_out[5],true_params_out[6],true_params_out[7]);
         fclose(ft);
 
         int counter;
