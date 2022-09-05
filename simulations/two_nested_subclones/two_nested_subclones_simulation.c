@@ -21,7 +21,7 @@ double true_params_out[7];
 double surviving_runs;
 
 ofstream myfile;
-
+// (b, d, t1, t2, t, delta, u, max_clones, fp)
 double expansion(double b[3], double d[3], double t1, double t2, double t, double delta, double u, int max_clones, FILE *fp)
 {
     restart_sim:
@@ -144,7 +144,7 @@ double expansion(double b[3], double d[3], double t1, double t2, double t, doubl
                 }
 
                 // if we just hit t1+t in the last time step record values
-                if (Time >= (t1+t) && t_yet[driver] == 0)
+                if (Time >= (t2+t) && t_yet[driver] == 0)
                 {
                     t_yet[driver] = 1;
                     WBC1[driver] = cells[driver];
