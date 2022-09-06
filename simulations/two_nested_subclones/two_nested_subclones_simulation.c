@@ -431,7 +431,7 @@ int main(int argc, char *argv[]){
         true_params_out[4] = t1;
         true_params_out[5] = t2prime;
         true_params_out[6] = t;
-        true_params_out[7] = delta
+        true_params_out[7] = delta;
 
         t2 = t1 + t2prime;
 
