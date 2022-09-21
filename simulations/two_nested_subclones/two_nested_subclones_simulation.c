@@ -50,7 +50,7 @@ double expansion(double b[3], double d[3], double t1, double t2, double t, doubl
     int m1_int = 0, m2_int = 0;
     double m1_obs, m2_obs;
     int clone_ind1, clone_ind2;
-    double r_hat, r1_hat, r2_hat, t1_hat, t2prime_hat, t_hat, u_hat, u_top, u_bottom, m1_hat, m2_hat;
+    double r_hat, r1_hat, r2_hat, t1_hat, t2_hat, t_hat, u_hat, u_top, u_bottom, m1_hat, m2_hat;
     double time_init[3] = {0.0,t1,t2};
     int m1_mutations[1000], m2_mutations[1000];
 
@@ -187,7 +187,11 @@ double expansion(double b[3], double d[3], double t1, double t2, double t, doubl
                 else rand-=Clone[j][driver];
                 
             }
-            if (cells[driver] == 0.0)
+            if (cells[0] == 0.0 && driver == 0)
+            {
+                return 0.0;
+            }
+            if (cells[driver] == 0.0 && driver > 0)
             {
                 cells[driver] = 1.0;
                 Clone[0][driver]=1.0;
@@ -213,6 +217,7 @@ double expansion(double b[3], double d[3], double t1, double t2, double t, doubl
         }
 
     }
+    m2 = m1 + m2;
 
     // mutation and lineage processing
     for (driver=0; driver<3;driver++)
@@ -231,18 +236,20 @@ double expansion(double b[3], double d[3], double t1, double t2, double t, doubl
                 if (Clone[i][1] == cells[1]) m1_clonal += 1.0; 
             }
         }
+    }
         
-        // add cells[1] to subclone size for the m1 mutations
-        for (i = 0; i <= m1_int; i++)
-        {
-            Clone[m1_mutations[i]][0] += cells[1]+cells[2];
-        }
-        // add cells[2] to subclone size for the m2 mutations
-        for (i = 0; i <= m2_int; i++)
-        {
-            Clone[m2_mutations[i]][1] += cells[2];
-        }
-
+    // add cells[1] to subclone size for the m1 mutations
+    for (i = 0; i <= m1_int; i++)
+    {
+        Clone[m1_mutations[i]][0] += cells[1]+cells[2];
+    }
+    // add cells[2] to subclone size for the m2 mutations
+    for (i = 0; i <= m2_int; i++)
+    {
+        Clone[m2_mutations[i]][1] += cells[2];
+    }
+    for (driver=0; driver<3;driver++)
+    {
         num_surviving_clones[driver]=0;
         
         for(i=0; i<=num_clones[driver]; i++)
@@ -293,8 +300,7 @@ double expansion(double b[3], double d[3], double t1, double t2, double t, doubl
             }
         }
         m1_obs = m1 + m1_clonal;
-        m2_obs = m2 + m2_clonal - m1_clonal;
-        printf("subclonal = %f bn (%f,%f)\n",subclonal, f1, f2);
+        m2_obs = m2 + m2_clonal;
         
         // Compute estimates
         // note, WBC variable is equivalent to WBC1_i = CCF_i * M1
@@ -307,16 +313,16 @@ double expansion(double b[3], double d[3], double t1, double t2, double t, doubl
         u_hat = u_top/u_bottom;
         
         m1_hat = m1_obs - u_hat/r1_hat;
-        m2_hat = m2_obs - u_hat/r2_hat + u_hat/r1_hat;
-        t1_hat = m1_hat/u_hat;
-        t2prime_hat = m2_hat/u_hat;
+        m2_hat = m2_obs - u_hat/r2_hat;
+        t1_hat = m1_hat/u_hat; 
+        t2_hat = m2_hat/u_hat;
 
         t_hat = (1./r2_hat)*log(cells[2]);
 
         #pragma omp critical (write_estimates)
         {
             fp = fopen("nested_subclones_simulation_results.txt","a");    
-            fprintf(fp, "%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f\n",r_hat, r1_hat, r2_hat, u_hat, t1_hat, t2prime_hat, t_hat, m1, m2, m1_obs, m2_obs, subclonal, alpha1c, alpha2c, beta1c, beta2c,M1,M2,cells[0],cells[1],cells[2],WBC1[0],WBC1[1],WBC1[2]);
+            fprintf(fp, "%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f\n",r_hat, r1_hat, r2_hat, u_hat, t1_hat, t2_hat, t_hat, m1, m2, m1_obs, m2_obs, subclonal, alpha1c, alpha2c, beta1c, beta2c,M1,M2,cells[0],cells[1],cells[2],WBC1[0],WBC1[1],WBC1[2]);
             fclose(fp);
         }
         // free memory
@@ -391,7 +397,7 @@ int main(int argc, char *argv[]){
         }
         printf("print str2[0]:%s\n",str[0]);
         
-        double b[3],d[3],t1,t2prime,t2,t,delta,u;
+        double b[3],d[3],t1,t2,t,delta,u;
         b[0] = stod(str2[0],NULL);
         b[1] = stod(str2[1],NULL);
         b[2] = stod(str2[2],NULL);
@@ -399,7 +405,7 @@ int main(int argc, char *argv[]){
         d[1] = stod(str2[4],NULL);
         d[2] = stod(str2[5],NULL);
         t1 = stod(str2[6],NULL);
-        t2prime = stod(str2[7],NULL);
+        t2 = stod(str2[7],NULL);
         t = stod(str2[8],NULL);
         delta = stod(str2[9],NULL);
         u = stod(str2[10],NULL);
@@ -420,16 +426,14 @@ int main(int argc, char *argv[]){
         true_params_out[2] = (b[2] - d[2]); // r2
         true_params_out[3] = u; 
         true_params_out[4] = t1;
-        true_params_out[5] = t2prime;
+        true_params_out[5] = t2;
         true_params_out[6] = t;
         true_params_out[7] = delta;
-
-        t2 = t1 + t2prime;
 
         // save the true parameter values to textfile
         // add a header to the output file
         ft = fopen("true_params.txt","w");    
-        fprintf(ft,"r,r1,r2,u,t1,t2prime,t,delta\n");
+        fprintf(ft,"r,r1,r2,u,t1,t2,t,delta\n");
         fclose(ft);
 
         ft = fopen("true_params.txt","a");
@@ -440,7 +444,7 @@ int main(int argc, char *argv[]){
         
         // add a header to the output file
         fp = fopen("nested_subclones_simulation_results.txt","w");    
-        fprintf(fp,"r_hat,r1_hat,r2_hat,u_hat,t1_hat,t2prime_hat,t_hat,m1,m2,m1_obs,m2_obs,gamma,alpha1c,alpha2c,beta1c,beta2c,M1,M2,cells[0],cells[1],cells[2],WBC1[0],WBC1[1],WBC1[2]\n");
+        fprintf(fp,"r_hat,r1_hat,r2_hat,u_hat,t1_hat,t2_hat,t_hat,m1,m2,m1_obs,m2_obs,gamma,alpha1c,alpha2c,beta1c,beta2c,M1,M2,cells[0],cells[1],cells[2],WBC1[0],WBC1[1],WBC1[2]\n");
         fclose(fp);
 
         // input file determines if we multithread
@@ -458,7 +462,7 @@ int main(int argc, char *argv[]){
                     #pragma omp critical (status)
                     {
                         completed++;
-                        cout << completed << " / " << runs << endl; 
+                        cout << surviving_runs << " surviving runs, " << completed << " all completed / " << runs << endl; 
                     }
                 }
         } else // otherwise, do a single run
