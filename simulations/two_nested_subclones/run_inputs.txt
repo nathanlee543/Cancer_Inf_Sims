@@ -1,15 +1,15 @@
 0.25#b
-0.375#b1
-0.47#b2
-0.0#d
-0.0#d1
-0.0#d2
-15.#t1
-9.#t2prime
-14.#t
-5.#delta
+0.25#b1
+0.25#b2
+0.18#d
+0.16#d1
+0.11#d2
+40.#t1
+70.#t2
+50.#t
+20.#delta
 1.#u
 70#num_threads
-100#runs
-1500000#max_clones
+500#runs
+6000000#max_clones
 0#parallel=0, sinlge_run = 1
