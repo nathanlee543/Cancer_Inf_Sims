@@ -187,18 +187,18 @@ double expansion(double b[3], double d[3], double t1, double t2, double t, doubl
                 else rand-=Clone[j][driver];
                 
             }
-            if (cells[driver] == 0.0)
+            if (cells[0] == 0.0 && driver == 0)
+            {
+                return 0.0;
+            }
+            if (cells[driver] == 0.0 && driver > 0)
             {
                 cells[driver] = 1.0;
                 Clone[0][driver]=1.0;
                 num_clones[driver]= 0;
                 Time = time_init[driver];
                 t_yet[driver] = 0;
-                if (driver == 0)
-                {
-                    t1_yet = 0;
-                    t2_yet = 0;
-                }
+
 
                 for(i=1; i<max_clones; i++)
                 {
@@ -222,18 +222,21 @@ double expansion(double b[3], double d[3], double t1, double t2, double t, doubl
         {
             Clone[ancestor[i][driver]][driver]+=Clone[i][driver];
         }
-        
-        // add cells[1] to subclone size for the m1 mutations
-        for (i = 0; i <= m1_int; i++)
-        {
-            Clone[m1_mutations[i]][0] += cells[1];
-        }
-        // add cells[2] to subclone size for the m2 mutations
-        for (i = 0; i <= m2_int; i++)
-        {
-            Clone[m2_mutations[i]][0] += cells[2];
-        }
+    }
+    // this might need fixed TO DO
+    // add cells[1] to subclone size for the m1 mutations
+    for (i = 0; i <= m1_int; i++)
+    {
+        Clone[m1_mutations[i]][0] += cells[1];
+    }
+    // add cells[2] to subclone size for the m2 mutations
+    for (i = 0; i <= m2_int; i++)
+    {
+        Clone[m2_mutations[i]][0] += cells[2];
+    }
 
+    for (driver=0; driver<3;driver++)
+    {        
         num_surviving_clones[driver]=0;
         
         for(i=0; i<=num_clones[driver]; i++)
@@ -302,8 +305,8 @@ double expansion(double b[3], double d[3], double t1, double t2, double t, doubl
         t1_hat = m1_hat/u_hat;
         t2_hat = m2_hat/u_hat;
 
-        tau1_hat = (1./r1_hat)*log(cells[1]);
-        tau2_hat = (1./r2_hat)*log(cells[2]);
+        tau1_hat = (1./r1_hat)*log(WBC1[1]);
+        tau2_hat = (1./r2_hat)*log(WBC1[2]);
 
         #pragma omp critical (write_estimates)
         {
@@ -413,13 +416,13 @@ int main(int argc, char *argv[]){
         true_params_out[3] = u; 
         true_params_out[4] = t1;
         true_params_out[5] = t2;
-        true_params_out[6] = t + delta; // tau1
-        true_params_out[7] = t + delta; // tau2 (have t1 = t2)
+        true_params_out[6] = t; // tau2
+        true_params_out[7] = delta; 
 
         // save the true parameter values to textfile
         // add a header to the output file
         ft = fopen("true_params.txt","w");    
-        fprintf(ft,"r,r1,r2,u,t1,t2,tau1,tau2\n");
+        fprintf(ft,"r,r1,r2,u,t1,t2,tau2,delta\n");
         fclose(ft);
 
         ft = fopen("true_params.txt","a");
@@ -448,7 +451,7 @@ int main(int argc, char *argv[]){
                     #pragma omp critical (status)
                     {
                         completed++;
-                        cout << completed << " / " << runs << endl; 
+                        cout << surviving_runs << " surviving runs, " << completed << " all completed / " << runs << endl; 
                     }
                 }
         } else // otherwise, do a single run
