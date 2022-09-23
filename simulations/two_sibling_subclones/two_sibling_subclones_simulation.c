@@ -75,7 +75,7 @@ double expansion(double b[3], double d[3], double t1, double t2, double t, doubl
         time_scale = cells[driver]*(b[driver]+d[driver]+u);
         Time += gsl_ran_exponential(r,1/time_scale);
 
-        for (; Time < (t1 + t + delta) && num_clones[driver]<max_clones ; )
+        for (; Time < (t2 + t + delta) && num_clones[driver]<max_clones ; )
         {
             // if we just hit t1 in last time step, record values
             // this condition will be satisfied during driver = 0 loop
@@ -141,8 +141,8 @@ double expansion(double b[3], double d[3], double t1, double t2, double t, doubl
                 }
             }
 
-            // if we just hit t1+t in the last time step record values
-            if (Time >= (t1+t) && t_yet[driver] == 0)
+            // if we just hit t2+t in the last time step record values
+            if (Time >= (t2+t) && t_yet[driver] == 0)
             {
                 t_yet[driver] = 1;
                 WBC1[driver] = cells[driver];
