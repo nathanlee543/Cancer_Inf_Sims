@@ -189,6 +189,12 @@ double expansion(double b[3], double d[3], double t1, double t2, double t, doubl
             }
             if (cells[0] == 0.0 && driver == 0)
             {
+                // free memory
+                delete[] Clone;
+                delete[] surviving_clone;
+                delete[] where;
+                delete[] ancestor;
+                delete[] surviving_ancestor;
                 return 0.0;
             }
             if (cells[driver] == 0.0 && driver > 0)
