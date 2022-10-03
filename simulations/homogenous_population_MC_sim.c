@@ -77,22 +77,17 @@ double expansion(double b[2], double d[2], double t1, double t, double delta, do
 
         for (driver=0; driver<2;driver++)
         {
-            // probably don't need to worry about the case where type-0 go extinct after driver event
             Time = time_init[driver];
             time_scale = cells[driver]*(b[driver]+d[driver]+u);
             Time += gsl_ran_exponential(r,1/time_scale);
-            //int debug_counter = 0;
-            //for (; Time < (t1 + t + delta) && debug_counter < 100 ; debug_counter++)
 
             for (; Time < (t1 + t + delta) && num_clones[driver]<max_clones ; )
             {
-                //printf("time = %f, pop = %f\n", Time, cells[driver]);
                 if (Time >= t1 && t1_yet == 0)
                 {   
                     //printf("t1\n");
                     t1_yet = 1;
                     cells[driver] -= 1.0;
-                    //printf("cells[driver]: %f\n",cells[driver]);
                     // get number of passengers present in founder type-1 cell
                     // pick which type-0 gets the driver mutation
                     rand=gsl_ran_flat(r,0.0,cells[driver]);
@@ -112,7 +107,6 @@ double expansion(double b[2], double d[2], double t1, double t, double delta, do
                     for (; clone_ind > 0;)
                     {
                         clone_ind = ancestor[clone_ind][driver];
-                        //printf("clone_ind: %i\n", clone_ind);
                         m += 1.0;
                         m_int += 1;
                         m_mutations[m_int] = clone_ind;
@@ -124,7 +118,6 @@ double expansion(double b[2], double d[2], double t1, double t, double delta, do
                 if (Time >= (t1+t) && t_yet[driver] == 0)
                 {
 
-                    //printf("made it to t1 + t\n");
                     t_yet[driver] = 1;
                     if (driver == 1)
                     {
@@ -133,14 +126,9 @@ double expansion(double b[2], double d[2], double t1, double t, double delta, do
                     M1 += cells[driver];
                 }
 
-                //if (Time >= (t1+t) && driver == 1) printf("breakpoint\n");
-                
-                // if (surviving_runs==1597) cout<< clone[0] << " "<< clone[1] <<endl;
-                
                 // determine which subclone event happens to
                 // update num cells in that subclone
                 rand=gsl_ran_flat(r,0.0,cells[driver]);
-                //printf("rand= %f\n", rand);
                 for (j=0; j<=num_clones[driver]; j++)
                 {
                     if (rand<Clone[j][driver])
@@ -154,7 +142,6 @@ double expansion(double b[2], double d[2], double t1, double t, double delta, do
                             ancestor[num_clones[driver]][driver]=j;
                             Clone[j][driver] -= 1.0;
                             j=num_clones[driver]+1;
-                            //printf("MUT\n");
                             
                         }
                         else
@@ -165,7 +152,6 @@ double expansion(double b[2], double d[2], double t1, double t, double delta, do
                                 cells[driver]+=1.0;
                                 Clone[j][driver]+=1.0;
                                 j=num_clones[driver]+1;
-                                //printf("BIRTH\n");
                             }
                             else
                             {
@@ -173,14 +159,12 @@ double expansion(double b[2], double d[2], double t1, double t, double delta, do
                                 cells[driver]-=1.0;
                                 Clone[j][driver]-=1.0;
                                 j=num_clones[driver]+1;
-                                //printf("DEATH\n");
                             }
                         }
                     }
                     else rand-=Clone[j][driver];
                     
                 }
-                // going to have all runs be surviving so we don't unecessarily do type-1 growth
                 if (cells[driver] == 0.0)
                 {
                     cells[driver] = 1.0;
@@ -196,30 +180,19 @@ double expansion(double b[2], double d[2], double t1, double t, double delta, do
                         surviving_ancestor[i][driver]=0;
                     }
                 }
-                //if (num_clones[driver] % 100000 == 0.0) printf("num clones %d, Time: %f, pop: %f\n",num_clones[driver],Time,cells[driver]);
                 time_scale=cells[driver]*(b[driver]+d[driver]+u);
                 Time+=gsl_ran_exponential(r,1/time_scale);
             }
 
-            //printf("finished type %i with pop %f\n", driver,cells[driver]);
         }
 
         for (driver=0; driver<2;driver++)
         {
-        
-            //printf("type %i, num clones %i\n", driver, num_clones[driver]);
-            //if ((surviving_runs % 100)==0) cout << surviving_runs << endl;
-            
-            //new
-            //for (i=0;i<=num_clones; i++) cout<< i <<" " <<clone[i]<<" "<<ancestor[i]<<endl;
-             //cout<<endl;
-            
             // clone[i] is going to include all the cells that have mutation i
             for(i=num_clones[driver]; i>0; i--) //first add clones then remove non-zero ones
             {
                 Clone[ancestor[i][driver]][driver]+=Clone[i][driver];
             }
-            
             
             // add cells[1] to subclone size for the m mutations
             for (i = 0; i <= m_int; i++)
@@ -227,12 +200,10 @@ double expansion(double b[2], double d[2], double t1, double t, double delta, do
                 Clone[m_mutations[i]][0] += cells[1];
             }
 
-
             num_surviving_clones[driver]=0;
             
             for(i=0; i<=num_clones[driver]; i++)
-            {
-                
+            { 
                 // if ancester mut is extinct, change ancester to previous ancester in lineage
                 if (Clone[ancestor[i][driver]][driver]==0.0)
                 {
@@ -246,17 +217,12 @@ double expansion(double b[2], double d[2], double t1, double t, double delta, do
                     surviving_clone[num_surviving_clones[driver]][driver]=Clone[i][driver];
                     where[i][driver]=num_surviving_clones[driver];
                     surviving_ancestor[num_surviving_clones[driver]][driver]=where[ancestor[i][driver]][driver];
-                    //cout<< num_surviving_clones <<" " <<surviving_clone[num_surviving_clones]<<" "<<surviving_ancestor[num_surviving_clones]<<endl;
                     num_surviving_clones[driver]+=1;
                 }
                 
             }
-            // don't understand this
             num_surviving_clones[driver]-=1;
-            //printf("type %i, num surviving clones %i\n", driver, num_surviving_clones[driver]);
         }
-
-
         // prevent a stack overflow error if you have more clones than you initialized    
         if (num_clones[0]<max_clones && num_clones[1]<max_clones)    
         {
@@ -485,13 +451,19 @@ int main(int argc, char *argv[]){
         if (par0_single_run1 == 0)
         {
             surviving_runs=0.0;
+            int completed = 0;
             omp_set_dynamic(0);     // Explicitly disable dynamic teams
             omp_set_num_threads(num_threads); // set number of threads for multithreading
             #pragma omp parallel for
                 for(counter=0; counter<runs;counter++ )
                 {
                     surviving_runs+=expansion(b, d, t1, t, delta, u, max_clones);
-                    printf("finished job %f\n",surviving_runs);
+                    
+                    #pragma omp critical(PRINT)
+                    {
+                        completed++;
+                        cout << completed << " / " << runs << endl; 
+                    }
                 }
         } else // otherwise, do a single run
         {
