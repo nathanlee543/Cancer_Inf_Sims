@@ -144,20 +144,20 @@ make_fish_diagram <- function(pt = ""){
   # reshape dataframe for plotting
   fish_df <- fish_df %>% pivot_longer(colnames(fish_df)[2:length(colnames(fish_df))], names_to = "clone", values_to = "WBC")
   fish_df$factor <- factor(fish_df$clone, levels = clone_plotting_order)
-  
+
   lwd <- 1.25
   arrow_length <- .2*max(c(rowSums(log10(WBC_df))))
-  
+
   p <- ggplot(fish_df)+
     geom_area(aes(x = time, y = WBC, fill = factor))+
-    scale_fill_manual(values=clone_colors, breaks = clones)+
+    scale_fill_manual(values=clone_colors, breaks = clone_plotting_order)+
     geom_linerange(data = data.frame(x1 = age,y1 = 0,
                                      lower = 0,
                                      upper = max(c(rowSums(log10(WBC_df))))),
                    aes(x = x1, y = y1,ymin = lower, ymax = upper, fill = NULL),
                    linetype = "longdash",
                    color = "white",
-                   lwd = lwd)+  
+                   lwd = lwd)+
     geom_segment(data = data.frame(x1 = seq_times,y1 = c(rowSums(log10(WBC_df)))+arrow_length,
                                    x2 = seq_times,
                                    y2 =  c(rowSums(log10(WBC_df)))),
@@ -179,14 +179,13 @@ make_fish_diagram <- function(pt = ""){
           panel.grid.minor = element_blank(),
           legend.position = "none",
           panel.border = element_blank(),
-          axis.text.x = element_text(family="Arial", size = 20),
-          axis.title.x = element_text(family="Arial", size = 25),
+          axis.text.x = element_text(family="Helvetica", size = 20),
+          axis.title.x = element_text(family="Helvetica", size = 25),
           axis.ticks = element_line(colour = "black", size = 2),
           axis.ticks.length.x =unit(.25, "cm"),
           aspect.ratio = 0.3)
-  filename_out <- paste0("pt",pt,"_fish_diagram.png")
-  ggsave(filename = filename_out,plot = p, dpi = 500)
-
+  filename_out <- paste0("pt",pt,"_fish_diagram.svg")
+  ggsave(filename = filename_out, plot = p,)
 }
 
 # generate the figures for each patient
